@@ -1,0 +1,38 @@
+{
+  "sections": [
+    {
+      "title": "Singles",
+      "items": [
+        {
+          "id": "song_happiness_valentine",
+          "title": "Happiness Valentine",
+          "artistId": "ouki",
+          "releaseDate": "2024-02-14",
+          "cover": "images/music/happiness-valentine.png",
+          "tags": ["Pop", "Valentine", "恋愛"],
+          "links": {
+            "YouTube": "",
+            "Spotify": "",
+            "Apple Music": ""
+          },
+          "lyricsPreview": "チョコレートみたいに とけてしまいそうな…",
+          "note": "バレンタインをテーマにした王姫の定番ポップ曲。"
+        },
+        {
+          "id": "song_dummy_future",
+          "title": "（ダミー）Future Song",
+          "artistId": "chiya_masa",
+          "releaseDate": "2025-XX-XX",
+          "tags": ["Future", "Ballad"],
+          "links": {
+            "YouTube": "",
+            "Spotify": "",
+            "Apple Music": ""
+          },
+          "lyricsPreview": "まだ見ぬ曲がここに入ります…",
+          "note": "千夕 雅 名義の曲ができたらここに追加予定。"
+        }
+      ]
+    }
+  ]
+}
