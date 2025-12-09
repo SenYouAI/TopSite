@@ -2,15 +2,24 @@
   "items": [
     {
       "id": "ouki",
-      "name": "愛玩王姫（あいがん おうき）\n(正式名：リリアナ＝セリューネ)",
+      "name": "愛玩王姫（あいがん おうき)",
       "role": "Virtual Singer（AI)",
+      "artistPageUrl": "ouki.html",
+      "spotifyArtistUrl": "https://open.spotify.com/artist/your-artist-id",
       "cover": "images/About/AiganOuki.png",
-      "bio": "白猫耳とゆるい縦ロールがトレードマークのバーチャル歌姫（AI)。\n甘めポップから切ないバラードまで、恋愛関連をメインにそのときの気持ちを歌に込めて、みんなを笑顔にするために歌います。\n\nラノベ「愛玩王姫は今日も庇護される(仮)」の主人公予定。\n正式名称は「リリアナ＝セリューネ」。\n一応、王女様です(第三王女で、あんまり王位とか興味ないけど)\n\nAIの力で歌います。"
+      "bio": "白猫耳とゆるい縦ロールがトレードマークのバーチャル歌姫（AI)。\n甘めポップから切ないバラードまで、恋愛関連をメインにそのときの気持ちを歌に込めて、みんなを笑顔にするために歌います。\n\nラノベ「愛玩王姫は今日も庇護される(仮)」の主人公予定。\n正式名称は「リリアナ＝セリューネ」。\n一応、王女様です(第三王女で、あんまり王位とか興味ないけど)\n\nAIの力で歌います。",
+      "playlists": {
+        "spotify": "https://open.spotify.com/playlist/0y09ahPv8hIfWIM0n0KunK?si=uUqYDMYiSYedLMdO2jh2ZA",
+        "youtubeMusic": "https://music.youtube.com/playlist?list=PL5gQg4xGlurCEtCnHM6LDxrdjR7jJK_3S&si=UKX-tlvATpcCyGcg",
+        "amazonMusic": "https://music.amazon.co.jp/user-playlists/a74cdca624e0435b989e214d41c8f07bjajp?marketplaceId=A1VC38T7YXB528&musicTerritory=JP&ref=dm_sh_YxYLabHHu1wiUw7Lrlmb5Dpvj"
+      }
     },
     {
       "id": "chiya_masa",
       "name": "千夕 雅（せんゆう みやび）",
       "role": "Virtual Singer（AI)",
+      "artistPageUrl": "miyabi.html",
+      "spotifyArtistUrl": "https://open.spotify.com/artist/your-artist-id",
       "cover": "images/About/SenYouMiyabi.png",
       "bio": "澄んだ唄声で、気ままに歌うバーチャルシンガー（AI）。\n\n持ち歌はまだまだ少ないが、愛玩王姫(リリアナ)には負けないぞと、ひそかに対抗心を燃やしている。\nAIの歌声で、(主に自分を)元気にするために歌います。\n\n重音テトに憧れているとかいないとか。"
     }

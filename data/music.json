@@ -8,21 +8,61 @@
           "title": "Happiness Valentine",
           "artistId": "ouki",
           "releaseDate": "2024-02-14",
+          "status": "released",
           "cover": "images/music/happiness-valentine.png",
           "tags": ["Pop", "Valentine", "恋愛"],
           "links": {
             "YouTube": "",
-            "Spotify": "",
+            "Spotify": "https://open.spotify.com/track/6yHtBzrhFticFaI2DBzkY6",
             "Apple Music": ""
           },
+          "spotifyEmbed": "https://open.spotify.com/embed/track/6yHtBzrhFticFaI2DBzkY6?utm_source=generator",
           "lyricsPreview": "チョコレートみたいに とけてしまいそうな…",
+          "lyrics": "鏡の前でくるりんぱ\n今日の私は特別だな\nリボンの色も迷っちゃう\n君の笑顔が浮かんじゃう\n\n秘密のノートに書き留めた\nきらめく想い どうしようかな\n心の中でリハーサル\nでも声が震えちゃうよ\n\nパチパチ弾けるこの気持ち\n抑えきれないハートの音\n夢みたいなシナリオ描いて\n君の前で勇気出すんだ\n\nもしも伝わらなかったら\n涙なんて流さないよ\nでも少しだけ不安になる\nだって君が特別だから\n\nキッチンの中でひとりごと\n手を動かすたび高鳴るの\n可愛いパッケージ選んだら\nきっと笑顔で受け取ってね\n\nキラキラ光るこの想い\n届けたいな 胸の鼓動\n魔法みたいな瞬間信じて\n君の心に触れたいんだ",
           "note": "バレンタインをテーマにした王姫の定番ポップ曲。"
+        },
+        {
+          "id": "song_kotoba_no_mukougawa",
+          "title": "言葉の向こう側",
+          "artistId": "ouki",
+          "releaseDate": "2024-11-15",
+          "status": "released",
+          "cover": "",
+          "tags": ["Ballad", "切ない"],
+          "links": {
+            "YouTube": "",
+            "Spotify": "https://open.spotify.com/track/4vbtXAnsrryqeqtDtKTODk",
+            "Apple Music": ""
+          },
+          "spotifyEmbed": "https://open.spotify.com/embed/track/4vbtXAnsrryqeqtDtKTODk?utm_source=generator",
+          "lyricsPreview": "",
+          "lyrics": "",
+          "note": ""
+        },
+        {
+          "id": "song_jugoya_monologue",
+          "title": "十五夜モノローグ",
+          "artistId": "ouki",
+          "releaseDate": "2024-09-17",
+          "status": "released",
+          "cover": "",
+          "tags": ["Ballad", "月"],
+          "links": {
+            "YouTube": "",
+            "Spotify": "https://open.spotify.com/track/4S2bNyZctKpnELluRoN67m",
+            "Apple Music": ""
+          },
+          "spotifyEmbed": "https://open.spotify.com/embed/track/4S2bNyZctKpnELluRoN67m?utm_source=generator",
+          "lyricsPreview": "",
+          "lyrics": "",
+          "note": ""
         },
         {
           "id": "song_dummy_future",
           "title": "（ダミー）Future Song",
           "artistId": "chiya_masa",
           "releaseDate": "2025-XX-XX",
+          "status": "coming",
           "tags": ["Future", "Ballad"],
           "links": {
             "YouTube": "",

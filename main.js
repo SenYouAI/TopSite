@@ -1,73 +1,98 @@
-let globalData = {};
+let globalData = null;
+let revealObserver = null;
+let currentArtistFilter = null;
 
-const DATA_FILES = {
-  site: "data/site.json",
-  artists: "data/artists.json",
-  music: "data/music.json",
-  novels: "data/novels.json",
-  stamps: "data/stamps.json"
-};
+// ---------- Data loading ----------
 
-async function loadData() {
-  const entries = await Promise.all(
-    Object.entries(DATA_FILES).map(async ([key, path]) => {
-      const res = await fetch(path);
-      if (!res.ok) {
-        throw new Error(`Failed to load ${path}: ${res.status} ${res.statusText}`);
-      }
-      const json = await res.json();
-      return [key, json];
-    })
-  );
-
-  globalData = {};
-  for (const [key, value] of entries) {
-    globalData[key] = value;
+async function loadJson(path) {
+  const res = await fetch(path);
+  if (!res.ok) {
+    throw new Error("Failed to load " + path + " (" + res.status + ")");
   }
+  return res.json();
 }
 
+async function loadAllData() {
+  const [site, artists, music, novels, stamps, news] = await Promise.all([
+    loadJson("data/site.json"),
+    loadJson("data/artists.json"),
+    loadJson("data/music.json"),
+    loadJson("data/novels.json"),
+    loadJson("data/stamps.json"),
+    loadJson("data/news.json").catch(() => ({ items: [] })), // Newsがない場合は空配列
+  ]);
+  return { site, artists, music, novels, stamps, news };
+}
+
+// ---------- Init ----------
+
 document.addEventListener("DOMContentLoaded", async () => {
-  const yearEl = document.getElementById("year");
-  if (yearEl) {
-    yearEl.textContent = new Date().getFullYear();
-  }
+  const app = document.getElementById("app");
+  const yearSpan = document.getElementById("year");
+  if (yearSpan) yearSpan.textContent = new Date().getFullYear().toString();
 
   try {
-    await loadData();
+    globalData = await loadAllData();
+    applySiteMeta(globalData.site);
+    renderNav(globalData.site.nav);
+
+    initRevealObserver();
+
+    // アーティストフィルタを window.__ARTIST_FILTER__ から取得
+    const filterFromPage = window.__ARTIST_FILTER__ || null;
+    const initial = parseInitialState();
+    
+    // ページにフィルタが設定されている場合は優先
+    currentArtistFilter = filterFromPage || initial.artistId;
+    
+    renderPage(initial.pageId);
   } catch (err) {
     console.error(err);
-    const app = document.getElementById("app");
     if (app) {
-      app.innerHTML =
-        "<p style='color:#ff9191;font-size:0.9rem;'>データ(JSON)の読み込みに失敗しました。GitHub Pages やローカルの簡易サーバーなど、HTTP経由で開いているか確認してください。</p>";
+      app.innerHTML = "<p>データの読み込みに失敗しました。</p>";
     }
-    return;
   }
-
-  applySiteMeta(globalData.site);
-  renderNav(globalData.site.nav);
-  initRevealObserver();
-  renderPage("home");
 });
 
+// ---------- URL helpers ----------
+
+function parseInitialState() {
+  const params = new URLSearchParams(window.location.search);
+  const hash = window.location.hash.replace("#", "");
+  const allPages = ["home", "music", "novels", "stamps", "about"];
+
+  let pageId = params.get("page") || hash;
+  if (!allPages.includes(pageId)) {
+    pageId = "home";
+  }
+
+  const artistId = params.get("artist") || null;
+  return { pageId, artistId };
+}
+
+// ---------- Meta / nav ----------
+
 function applySiteMeta(site) {
+  document.title = site.title || document.title;
   const theme = site.theme || "dark";
   const season = site.season || "default";
   document.body.dataset.theme = theme;
   document.body.dataset.season = season;
-  document.title = site.title || document.title;
 }
 
-function renderNav(nav) {
+function renderNav(navItems) {
   const navRoot = document.getElementById("site-nav");
+  if (!navRoot) return;
+
   navRoot.innerHTML = "";
-  nav.forEach((item, idx) => {
+
+  navItems.forEach((item, index) => {
     const a = document.createElement("a");
     a.href = "#" + item.id;
     a.textContent = item.label;
-    if (idx === 0) a.classList.add("active");
-    a.addEventListener("click", (e) => {
-      e.preventDefault();
+    if (index === 0) a.classList.add("active");
+    a.addEventListener("click", (ev) => {
+      ev.preventDefault();
       renderPage(item.id);
     });
     navRoot.appendChild(a);
@@ -76,6 +101,8 @@ function renderNav(nav) {
 
 function setActiveNav(pageId) {
   const navRoot = document.getElementById("site-nav");
+  if (!navRoot) return;
+
   navRoot.querySelectorAll("a").forEach((a) => {
     const target = a.getAttribute("href")?.replace("#", "");
     if (target === pageId) {
@@ -86,10 +113,10 @@ function setActiveNav(pageId) {
   });
 }
 
-let revealObserver = null;
+// ---------- Reveal animation ----------
 
 function initRevealObserver() {
-  if (revealObserver) return;
+  if (typeof IntersectionObserver === "undefined") return;
   revealObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -99,72 +126,112 @@ function initRevealObserver() {
         }
       });
     },
-    { threshold: 0.12 }
+    { 
+      threshold: 0.1,
+      rootMargin: "0px 0px 100px 0px" // 下方向に100px早めに表示開始
+    }
   );
 }
 
 function registerRevealTargets(root) {
-  if (!revealObserver) return;
+  if (!revealObserver || !root) return;
   root.querySelectorAll(".reveal").forEach((el) => {
     if (!el.classList.contains("is-visible")) {
-      revealObserver.observe(el);
+      // 初期表示時にビューポート内にある要素は即座に表示
+      const rect = el.getBoundingClientRect();
+      const isInitiallyVisible = rect.top < window.innerHeight && rect.bottom > 0;
+      
+      if (isInitiallyVisible) {
+        el.classList.add("is-visible");
+      } else {
+        revealObserver.observe(el);
+      }
     }
   });
 }
 
+// ---------- Page rendering ----------
+
 function renderPage(pageId) {
   const app = document.getElementById("app");
-  const { site, artists, music, novels, stamps } = globalData;
+  if (!app || !globalData) return;
+
+  const { site, artists, music, novels, stamps, news } = globalData;
   app.innerHTML = "";
 
+  let root;
   if (pageId === "home") {
-    app.appendChild(renderHome(site, artists, music, novels, stamps));
+    root = renderHome(site, artists, music, novels, stamps, news);
   } else if (pageId === "music") {
-    app.appendChild(renderMusic(artists, music));
+    root = renderMusic(artists, music, currentArtistFilter);
   } else if (pageId === "novels") {
-    app.appendChild(renderNovels(novels));
+    root = renderNovels(novels);
   } else if (pageId === "stamps") {
-    app.appendChild(renderStamps(stamps));
+    root = renderStamps(stamps);
   } else if (pageId === "about") {
-    app.appendChild(renderAbout(artists));
+    root = renderAbout(artists);
+  } else {
+    root = document.createElement("div");
+    root.innerHTML = "<p>ページが見つかりません。</p>";
   }
 
+  app.appendChild(root);
   setActiveNav(pageId);
   registerRevealTargets(app);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/* ---------- Page renderers ---------- */
+// ---------- Home ----------
 
-function renderHome(site, artists, music, novels, stamps) {
+function renderHome(site, artists, music, novels, stamps, news) {
   const root = document.createElement("div");
+  
+  // アーティストフィルタが設定されている場合、フィルタリング
+  const filterArtistId = currentArtistFilter;
+  let filteredArtists = artists.items || [];
+  
+  if (filterArtistId) {
+    filteredArtists = filteredArtists.filter(a => a.id === filterArtistId);
+  }
 
   const hero = document.createElement("section");
   hero.className = "hero reveal";
+  
+  // フィルタされている場合はタイトルを変更
+  const currentArtist = filterArtistId ? getArtistById(artists, filterArtistId) : null;
+  const heroTitle = currentArtist 
+    ? `${currentArtist.name} Official` 
+    : "愛玩王姫 & 千夕 雅 Official";
+  const heroTagline = currentArtist ? currentArtist.bio : site.tagline;
+  
   hero.innerHTML = `
-    <div>
-      <div class="hero-main-title">${site.title}</div>
-      <div class="hero-tagline">${site.tagline}</div>
-      <div class="hero-pills">
-        <span class="pill"><span class="pill-dot"></span> Music</span>
-        <span class="pill"><span class="pill-dot"></span> Novel</span>
-        <span class="pill"><span class="pill-dot"></span> LINEスタンプ</span>
+    <div class="hero-main">
+      <div class="hero-kicker">SenYouAI Studio</div>
+      <h1 class="hero-title">${escapeHtml(heroTitle)}</h1>
+      <p class="hero-tagline">${escapeHtml(heroTagline)}</p>
+      <div class="hero-actions">
+        <button class="button button-primary" data-jump="music">最新曲を聴く</button>
+        ${filterArtistId ? '' : '<button class="button button-ghost" data-jump="novels">物語を読む</button>'}
       </div>
     </div>
-    <div>
-      <div class="hero-secondary-title">ARTISTS</div>
-      <div class="hero-card-grid">
-        ${artists.items
+    <div class="hero-side">
+      <div class="hero-side-title">ARTISTS</div>
+      <div class="hero-artist-grid">
+        ${filteredArtists
           .map(
-            (a) => `
-          <article class="hero-artist-card">
-            <div class="hero-artist-avatar"></div>
-            <div>
-              <div class="hero-artist-main">${a.name}</div>
-              <div class="hero-artist-sub">${a.role}</div>
+            (a, index) => `
+          <button class="hero-artist-card hero-artist-card--${escapeHtml(
+            a.id
+          )}" data-artist-id="${escapeHtml(a.id)}">
+            <div class="hero-artist-avatar ${
+              a.id === 'chiya_masa' ? "hero-artist-avatar--alt" : ""
+            }" style="background-image: url('${escapeHtml(a.cover || '')}');"></div>
+            <div class="hero-artist-text">
+              <div class="hero-artist-name">${escapeHtml(a.name)}</div>
+              <div class="hero-artist-role">${escapeHtml(a.role || "")}</div>
               <div class="hero-artist-meta">SenYouAI Project</div>
             </div>
-          </article>
+          </button>
         `
           )
           .join("")}
@@ -173,48 +240,172 @@ function renderHome(site, artists, music, novels, stamps) {
   `;
   root.appendChild(hero);
 
-  const section = document.createElement("section");
-  section.className = "section reveal";
-  section.innerHTML = `
+  // hero 内ショートカットをナビに接続
+  hero.querySelectorAll(".pill--nav").forEach((btn) => {
+    const target = btn.dataset.navTarget;
+    if (!target) return;
+    btn.addEventListener("click", () => {
+      renderPage(target);
+    });
+  });
+
+  // Hero buttons
+  hero.querySelectorAll("[data-jump]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = btn.getAttribute("data-jump");
+      if (!target) return;
+      if (target === "music") {
+        currentArtistFilter = null;
+      }
+      renderPage(target);
+    });
+  });
+
+  // Artist cards -> Music page with filter
+  hero.querySelectorAll(".hero-artist-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const artistId = btn.dataset.artistId || null;
+      currentArtistFilter = artistId;
+      renderPage("music");
+    });
+  });
+
+  // News section（フィルタなしの場合のみ）
+  if (!filterArtistId && news && news.items && news.items.length > 0) {
+    const newsSection = document.createElement("section");
+    newsSection.className = "section section-news reveal";
+    newsSection.innerHTML = `
+      <div class="section-header">
+        <h2 class="section-title">NEWS</h2>
+        <div class="section-subtitle">お知らせ・最新情報</div>
+      </div>
+    `;
+    
+    const newsContainer = document.createElement("div");
+    newsContainer.className = "news-container";
+    
+    // 最新5件を表示
+    news.items.slice(0, 5).forEach((item) => {
+      const newsCard = document.createElement("div");
+      newsCard.className = "news-card";
+      
+      newsCard.innerHTML = `
+        <div class="news-date">
+          <span class="news-icon">${escapeHtml(item.icon || "📢")}</span>
+          <span class="news-date-text">${escapeHtml(item.date)}</span>
+        </div>
+        <div class="news-content">
+          <div class="news-title">${escapeHtml(item.title)}</div>
+          ${item.description ? `<div class="news-description">${escapeHtml(item.description)}</div>` : ''}
+        </div>
+      `;
+      
+      // リンクがある場合はクリック可能に
+      if (item.link) {
+        newsCard.style.cursor = "pointer";
+        newsCard.addEventListener("click", () => {
+          if (item.link.startsWith("#")) {
+            const pageId = item.link.substring(1);
+            renderPage(pageId);
+          } else {
+            window.open(item.link, "_blank");
+          }
+        });
+      }
+      
+      newsContainer.appendChild(newsCard);
+    });
+    
+    newsSection.appendChild(newsContainer);
+    root.appendChild(newsSection);
+  }
+
+  // Latest Music section
+  const latestMusicSection = document.createElement("section");
+  latestMusicSection.className = "section reveal";
+  latestMusicSection.innerHTML = `
     <div class="section-header">
-      <h2 class="section-title">Latest</h2>
-      <div class="section-subtitle">最近の公開コンテンツ</div>
+      <h2 class="section-title">Latest Music</h2>
+      <div class="section-subtitle">最新の楽曲</div>
     </div>
   `;
-  const grid = document.createElement("div");
-  grid.className = "card-grid card-grid--single";
+  const musicGrid = document.createElement("div");
+  musicGrid.className = "card-grid";
 
-  const latestSong = music.sections[0]?.items[0];
-  if (latestSong) {
-    grid.appendChild(createMusicCard(latestSong, artists));
+  // アーティストフィルタを適用
+  let allTracks = (music.sections || []).flatMap((s) => s.items || []);
+  if (filterArtistId) {
+    allTracks = allTracks.filter(t => t.artistId === filterArtistId);
   }
+  
+  // 最新3曲を表示
+  const latestTracks = allTracks.slice(0, 3);
+  latestTracks.forEach((track) => {
+    musicGrid.appendChild(createMusicCard(track, artists));
+  });
 
-  const latestNovel = novels.items[0];
-  if (latestNovel) {
-    grid.appendChild(createNovelCard(latestNovel));
+  latestMusicSection.appendChild(musicGrid);
+  root.appendChild(latestMusicSection);
+
+  // Latest Novels & Stamps section（フィルタなしの場合のみ）
+  if (!filterArtistId) {
+    const latestOthersSection = document.createElement("section");
+    latestOthersSection.className = "section reveal";
+    latestOthersSection.innerHTML = `
+      <div class="section-header">
+        <h2 class="section-title">Latest Novels & Stamps</h2>
+        <div class="section-subtitle">最新の小説・スタンプ</div>
+      </div>
+    `;
+    const othersGrid = document.createElement("div");
+    othersGrid.className = "card-grid";
+
+    const latestNovel = (novels.items || [])[0];
+    if (latestNovel) {
+      othersGrid.appendChild(createNovelCard(latestNovel));
+    }
+
+    const latestStamp = (stamps.items || [])[0];
+    if (latestStamp) {
+      othersGrid.appendChild(createStampCard(latestStamp));
+    }
+    
+    latestOthersSection.appendChild(othersGrid);
+    root.appendChild(latestOthersSection);
   }
-
-  const latestStamp = stamps.items[0];
-  if (latestStamp) {
-    grid.appendChild(createStampCard(latestStamp));
-  }
-
-  section.appendChild(grid);
-  root.appendChild(section);
 
   return root;
 }
 
-function renderMusic(artists, music) {
+// ---------- Music ----------
+
+function renderMusic(artists, music, artistFilter) {
   const root = document.createElement("div");
 
   const header = document.createElement("header");
   header.className = "page-header reveal";
+
+  let subtitle = "配信リンクと歌詞（予定）をまとめる楽曲一覧ページです。";
+  let artistName = "";
+  if (artistFilter) {
+    const artist = getArtistById(artists, artistFilter);
+    if (artist) {
+      artistName = artist.name;
+      subtitle = `${artist.name} 名義の楽曲一覧です。`;
+    }
+  }
+
   header.innerHTML = `
     <div class="page-header-kicker">PAGE</div>
-    <h1 class="page-header-title">Music</h1>
-    <p class="page-header-subtitle">配信リンクと歌詞（予定）をまとめる楽曲一覧ページです。</p>
+    <h1 class="page-header-title">Music ${
+      artistName ? `<span class="page-header-filter">/ ${escapeHtml(artistName)}</span>` : ""
+    }</h1>
+    <p class="page-header-subtitle">${escapeHtml(subtitle)}</p>
   `;
+
+  // プレイリストリンク行を追加（対応しているアーティストのみ）
+  appendPlaylistRow(header, artists, artistFilter);
+
   root.appendChild(header);
 
   const sec = document.createElement("section");
@@ -222,22 +413,84 @@ function renderMusic(artists, music) {
   sec.innerHTML = `
     <div class="section-header">
       <h2 class="section-title">All Tracks</h2>
-      <div class="section-subtitle">シングル一覧</div>
+      <div class="section-subtitle">${
+        artistName ? `${escapeHtml(artistName)} のシングル` : "シングル一覧"
+      }</div>
     </div>
   `;
 
   const grid = document.createElement("div");
-  grid.className = "card-grid card-grid--single";
-  music.sections.forEach((section) => {
-    section.items.forEach((track) => {
-      grid.appendChild(createMusicCard(track, artists));
-    });
+  grid.className = "card-grid";
+
+  const allTracks = (music.sections || []).flatMap((s) => s.items || []);
+  const tracks = artistFilter
+    ? allTracks.filter((t) => t.artistId === artistFilter)
+    : allTracks;
+
+  tracks.forEach((track) => {
+    grid.appendChild(createMusicCard(track, artists));
   });
+
+  if (!tracks.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-message";
+    empty.textContent = "まだ楽曲が登録されていません。";
+    sec.appendChild(empty);
+  }
+
   sec.appendChild(grid);
   root.appendChild(sec);
 
   return root;
 }
+
+// Music ヘッダにプレイリスト行を追加するヘルパー
+function appendPlaylistRow(headerEl, artists, artistFilter) {
+  if (!headerEl || !artists || !artists.items) return;
+
+  let targetArtist = null;
+
+  if (artistFilter) {
+    targetArtist = getArtistById(artists, artistFilter);
+  } else {
+    // フィルタがない場合は、プレイリストを持っている最初のアーティスト（今は王姫）を表示
+    targetArtist = (artists.items || []).find(
+      (a) => a.playlists && Object.keys(a.playlists).length > 0
+    );
+  }
+
+  if (!targetArtist || !targetArtist.playlists) return;
+
+  const playlists = targetArtist.playlists;
+  const row = document.createElement("div");
+  row.className = "page-header-playlists";
+
+  const label = document.createElement("span");
+  label.className = "page-header-playlists-label";
+  label.textContent = `${targetArtist.name} Playlist`;
+  row.appendChild(label);
+
+  function addLink(key, labelText, extraClass) {
+    const url = playlists[key];
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.className = "playlist-link" + (extraClass ? " " + extraClass : "");
+    a.textContent = labelText;
+    row.appendChild(a);
+  }
+
+  addLink("spotify", "Spotify", "playlist-link--spotify");
+  addLink("appleMusic", "Apple Music", "playlist-link--apple");
+  addLink("amazonMusic", "Amazon Music", "playlist-link--amazon");
+  addLink("youtubeMusic", "YouTube Music", "playlist-link--ytmusic");
+
+  headerEl.appendChild(row);
+}
+
+// ---------- Novels ----------
 
 function renderNovels(novels) {
   const root = document.createElement("div");
@@ -261,15 +514,19 @@ function renderNovels(novels) {
   `;
 
   const grid = document.createElement("div");
-  grid.className = "card-grid card-grid--single";
-  novels.items.forEach((novel) => {
+  grid.className = "card-grid";
+
+  (novels.items || []).forEach((novel) => {
     grid.appendChild(createNovelCard(novel));
   });
+
   sec.appendChild(grid);
   root.appendChild(sec);
 
   return root;
 }
+
+// ---------- Stamps ----------
 
 function renderStamps(stamps) {
   const root = document.createElement("div");
@@ -293,15 +550,19 @@ function renderStamps(stamps) {
   `;
 
   const grid = document.createElement("div");
-  grid.className = "card-grid card-grid--single";
-  stamps.items.forEach((stamp) => {
+  grid.className = "card-grid";
+
+  (stamps.items || []).forEach((stamp) => {
     grid.appendChild(createStampCard(stamp));
   });
+
   sec.appendChild(grid);
   root.appendChild(sec);
 
   return root;
 }
+
+// ---------- About ----------
 
 function renderAbout(artists) {
   const root = document.createElement("div");
@@ -311,7 +572,7 @@ function renderAbout(artists) {
   header.innerHTML = `
     <div class="page-header-kicker">PAGE</div>
     <h1 class="page-header-title">About</h1>
-    <p class="page-header-subtitle">SenYouAI Studio と、その中の人たちの簡単な紹介ページです。</p>
+    <p class="page-header-subtitle">SenYouAI Studio と、その中の人たちの紹介ページです。</p>
   `;
   root.appendChild(header);
 
@@ -325,8 +586,9 @@ function renderAbout(artists) {
   `;
 
   const grid = document.createElement("div");
-  grid.className = "card-grid card-grid--single";
-  artists.items.forEach((a) => {
+  grid.className = "card-grid";
+
+  (artists.items || []).forEach((a) => {
     const card = document.createElement("article");
     card.className = "card card--media reveal";
 
@@ -347,35 +609,54 @@ function renderAbout(artists) {
     titleEl.textContent = a.name;
     body.appendChild(titleEl);
 
-    const metaEl = document.createElement("div");
-    metaEl.className = "card-meta";
-    metaEl.textContent = a.role;
-    body.appendChild(metaEl);
+    if (a.role) {
+      const roleEl = document.createElement("div");
+      roleEl.className = "card-meta";
+      roleEl.textContent = a.role;
+      body.appendChild(roleEl);
+    }
 
     if (a.bio) {
-      const desc = document.createElement("p");
-      desc.className = "card-meta";
-      desc.textContent = a.bio;
-      body.appendChild(desc);
+      const bioEl = document.createElement("p");
+      bioEl.className = "card-meta card-meta--bio";
+      bioEl.textContent = a.bio;
+      body.appendChild(bioEl);
     }
 
     card.appendChild(body);
     grid.appendChild(card);
   });
+
   sec.appendChild(grid);
   root.appendChild(sec);
 
   return root;
 }
 
-/* ---------- Card helpers ---------- */
+// ---------- Card helpers ----------
+
+function getArtistById(artists, id) {
+  return (artists.items || []).find((a) => a.id === id) || null;
+}
 
 function createMusicCard(track, artists) {
+  const artist = getArtistById(artists, track.artistId);
+  const status = track.status || "released";
+
   const card = document.createElement("article");
-  card.className = "card card--music reveal";
+  card.className = "card card--media card--music reveal";
+  if (status === "coming") {
+    card.classList.add("card--coming");
+  }
+  if (artist) {
+    if (artist.id === "chiya_masa") {
+      card.classList.add("card--artist-miyabi");
+    } else {
+      card.classList.add("card--artist-ouki");
+    }
+  }
 
-  const artist = artists.items.find((a) => a.id === track.artistId);
-
+  // カバー画像（常にPNG画像を表示）
   const cover = document.createElement("div");
   cover.className = "card-cover card-cover--top";
   if (track.cover) {
@@ -395,14 +676,46 @@ function createMusicCard(track, artists) {
 
   const metaEl = document.createElement("div");
   metaEl.className = "card-meta";
-  metaEl.textContent = `${artist ? artist.name : ""} ／ ${track.releaseDate || ""}`;
+  let dateLabel = track.releaseDate || "";
+  if (status === "coming" && dateLabel) {
+    dateLabel += "（予定）";
+  }
+  
+  // アーティスト名をリンク可能に
+  if (artist && artist.artistPageUrl) {
+    const artistLink = document.createElement("a");
+    artistLink.href = artist.artistPageUrl;
+    artistLink.className = "artist-link";
+    artistLink.textContent = artist.name;
+    metaEl.appendChild(artistLink);
+    
+    if (dateLabel) {
+      metaEl.appendChild(document.createTextNode(" ／ " + dateLabel));
+    }
+  } else {
+    const artistName = artist ? artist.name : "";
+    metaEl.textContent = [artistName, dateLabel].filter(Boolean).join(" ／ ");
+  }
+  
   body.appendChild(metaEl);
 
-  if (track.note || track.lyricsPreview) {
-    const desc = document.createElement("p");
-    desc.className = "card-meta";
-    desc.textContent = track.note || track.lyricsPreview;
-    body.appendChild(desc);
+  // Spotifyコンパクトプレーヤー（spotifyEmbed がある場合だけ）
+  if (track.spotifyEmbed && track.spotifyEmbed.trim().length > 0) {
+    const spotifyContainer = document.createElement("div");
+    spotifyContainer.className = "card-spotify";
+    
+    const spotifyLabel = document.createElement("div");
+    spotifyLabel.className = "card-spotify-label";
+    spotifyLabel.textContent = "Spotifyで試聴";
+    spotifyContainer.appendChild(spotifyLabel);
+    
+    const spotifyIframe = document.createElement("iframe");
+    spotifyIframe.src = track.spotifyEmbed;
+    spotifyIframe.loading = "lazy";
+    spotifyIframe.allow = "encrypted-media";
+    spotifyContainer.appendChild(spotifyIframe);
+    
+    body.appendChild(spotifyContainer);
   }
 
   if (track.tags && track.tags.length) {
@@ -417,11 +730,51 @@ function createMusicCard(track, artists) {
     body.appendChild(chipRow);
   }
 
+  if (track.note || track.lyricsPreview) {
+    const desc = document.createElement("p");
+    desc.className = "card-meta";
+    desc.textContent = track.note || track.lyricsPreview;
+    body.appendChild(desc);
+  }
+
+  // 歌詞トグル（track.lyrics がある場合だけ）
+  const rawLyrics = track.lyrics;
+  const hasLyrics =
+    rawLyrics != null && String(rawLyrics).trim().length > 0;
+
+  if (hasLyrics) {
+    const toggleRow = document.createElement("div");
+    toggleRow.className = "card-lyrics-toggle-row";
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.type = "button";
+    toggleBtn.className = "button button-ghost button-lyrics-toggle";
+    toggleBtn.textContent = "歌詞を表示";
+
+    const lyricsEl = document.createElement("div");
+    lyricsEl.className = "card-lyrics";
+
+    const lyricsHtml = String(rawLyrics)
+      .split(/\r?\n/)
+      .map((line) => escapeHtml(line))
+      .join("<br>");
+    lyricsEl.innerHTML = lyricsHtml;
+
+    toggleBtn.addEventListener("click", () => {
+      const open = card.classList.toggle("card--lyrics-open");
+      toggleBtn.textContent = open ? "歌詞を閉じる" : "歌詞を表示";
+    });
+
+    toggleRow.appendChild(toggleBtn);
+    body.appendChild(toggleRow);
+    body.appendChild(lyricsEl);
+  }
+
   const linkRow = document.createElement("div");
   linkRow.className = "link-row";
   if (track.links) {
     Object.entries(track.links)
-      .filter(([_, url]) => url)
+      .filter(([, url]) => !!url)
       .forEach(([label, url]) => {
         const a = document.createElement("a");
         a.href = url;
@@ -478,28 +831,28 @@ function createNovelCard(novel) {
     linkRow.className = "link-row";
     if (novel.links.narou) {
       const a = document.createElement("a");
-      a.className = "ghost-link";
       a.href = novel.links.narou;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
+      a.className = "ghost-link";
       a.textContent = "小説サイト";
       linkRow.appendChild(a);
     }
     if (novel.links.kindle) {
       const a = document.createElement("a");
-      a.className = "ghost-link";
       a.href = novel.links.kindle;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
+      a.className = "ghost-link";
       a.textContent = "Kindle";
       linkRow.appendChild(a);
     }
     if (novel.links.other) {
       const a = document.createElement("a");
-      a.className = "ghost-link";
       a.href = novel.links.other;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
+      a.className = "ghost-link";
       a.textContent = "Other";
       linkRow.appendChild(a);
     }
@@ -559,19 +912,19 @@ function createStampCard(stamp) {
   linkRow.className = "link-row";
   if (stamp.listUrl) {
     const a = document.createElement("a");
-    a.className = "ghost-link";
     a.href = stamp.listUrl;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
+    a.className = "ghost-link";
     a.textContent = "作者スタンプ一覧";
     linkRow.appendChild(a);
   }
   if (stamp.detailUrl) {
     const a = document.createElement("a");
-    a.className = "ghost-link";
     a.href = stamp.detailUrl;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
+    a.className = "ghost-link";
     a.textContent = "このスタンプを見る";
     linkRow.appendChild(a);
   }
@@ -579,4 +932,14 @@ function createStampCard(stamp) {
 
   card.appendChild(body);
   return card;
+}
+
+// ---------- Utils ----------
+
+function escapeHtml(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }

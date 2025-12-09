@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スマホ表示テスト - SenYouAI Studio</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* テスト用の追加スタイル */
+    .test-info {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .test-info div {
+      margin: 5px 0;
+      color: #333;
+    }
+    
+    .test-info strong {
+      color: #8452ff;
+    }
+  </style>
+</head>
+<body class="theme-dark season-default">
+  <!-- 表示情報 -->
+  <div class="test-info">
+    <div><strong>画面幅:</strong> <span id="screen-width">-</span>px</div>
+    <div><strong>デバイス:</strong> <span id="device-type">-</span></div>
+    <div><strong>列数:</strong> <span id="column-count">-</span></div>
+  </div>
+
+  <div class="site-shell">
+    <!-- ヘッダー -->
+    <header class="site-header">
+      <div class="header-left">
+        <div class="site-logo">
+          <h1 class="site-logo-title">SenYouAI Studio</h1>
+        </div>
+      </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="site-main">
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">スマホ表示テスト</h2>
+        </div>
+
+        <div class="grid">
+          <!-- カード1: PNG画像 + Spotifyコンパクトプレーヤー -->
+          <article class="card card--media card--music card--artist-ouki">
+            <div class="card-cover card-cover--top" style="background-image: url('images/About/happiness-valentine.png'); background-size: cover; background-position: center;"></div>
+            <div class="card-body">
+              <div class="card-title">Happiness Valentine</div>
+              <div class="card-meta">愛玩王姫 ／ 2024-02-14</div>
+              <p class="card-meta">バレンタインをテーマにした王姫の定番ポップ曲。</p>
+              <div class="chip-row">
+                <span class="chip">Pop</span>
+                <span class="chip">Valentine</span>
+                <span class="chip">恋愛</span>
+              </div>
+              <div class="card-spotify">
+                <div class="card-spotify-label">Spotifyで試聴</div>
+                <iframe 
+                  src="https://open.spotify.com/embed/track/6yHtBzrhFticFaI2DBzkY6?utm_source=generator" 
+                  loading="lazy"
+                  allow="encrypted-media"
+                ></iframe>
+              </div>
+            </div>
+          </article>
+
+          <!-- カード2: PNG画像 + Spotifyコンパクトプレーヤー -->
+          <article class="card card--media card--music card--artist-ouki">
+            <div class="card-cover card-cover--top" style="background-image: url('images/About/SenYouMiyabi.png'); background-size: cover; background-position: center;"></div>
+            <div class="card-body">
+              <div class="card-title">言葉の向こう側</div>
+              <div class="card-meta">愛玩王姫 ／ 2024-11-15</div>
+              <div class="chip-row">
+                <span class="chip">Ballad</span>
+                <span class="chip">切ない</span>
+              </div>
+              <div class="card-spotify">
+                <div class="card-spotify-label">Spotifyで試聴</div>
+                <iframe 
+                  src="https://open.spotify.com/embed/track/4vbtXAnsrryqeqtDtKTODk?utm_source=generator" 
+                  loading="lazy"
+                  allow="encrypted-media"
+                ></iframe>
+              </div>
+            </div>
+          </article>
+
+          <!-- カード3: PNG画像のみ（配信前） -->
+          <article class="card card--media card--music card--artist-ouki card--coming">
+            <div class="card-cover card-cover--top" style="background-image: url('images/About/happiness-valentine.png'); background-size: cover; background-position: center;"></div>
+            <div class="card-body">
+              <div class="card-title">新曲（配信前）</div>
+              <div class="card-meta">愛玩王姫 ／ 2025-01-01（予定）</div>
+              <p class="card-meta">配信前の楽曲はPNG画像のみ表示されます。</p>
+              <div class="chip-row">
+                <span class="chip">Pop</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- カード4: PNG画像 + Spotifyコンパクトプレーヤー -->
+          <article class="card card--media card--music card--artist-ouki">
+            <div class="card-cover card-cover--top" style="background-image: url('images/About/AiganOuki.png'); background-size: cover; background-position: center;"></div>
+            <div class="card-body">
+              <div class="card-title">十五夜モノローグ</div>
+              <div class="card-meta">愛玩王姫 ／ 2024-09-17</div>
+              <div class="chip-row">
+                <span class="chip">Ballad</span>
+                <span class="chip">月</span>
+              </div>
+              <div class="card-spotify">
+                <div class="card-spotify-label">Spotifyで試聴</div>
+                <iframe 
+                  src="https://open.spotify.com/embed/track/4S2bNyZctKpnELluRoN67m?utm_source=generator" 
+                  loading="lazy"
+                  allow="encrypted-media"
+                ></iframe>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // 画面情報を表示
+    function updateScreenInfo() {
+      const width = window.innerWidth;
+      document.getElementById('screen-width').textContent = width;
+      
+      // デバイスタイプ判定
+      let deviceType = 'Desktop';
+      if (width <= 720) {
+        deviceType = 'Mobile';
+      } else if (width <= 1024) {
+        deviceType = 'Tablet';
+      }
+      document.getElementById('device-type').textContent = deviceType;
+      
+      // 列数判定（簡易版）
+      let columns = '2列';
+      if (width <= 600) {
+        columns = '1列';
+      }
+      document.getElementById('column-count').textContent = columns;
+    }
+    
+    updateScreenInfo();
+    window.addEventListener('resize', updateScreenInfo);
+  </script>
+</body>
+</html>

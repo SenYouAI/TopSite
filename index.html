@@ -3,29 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SenYouAI / 愛玩王姫 & 千夕 雅 Official</title>
+  <title>SenYouAI Studio / 愛玩王姫 Official</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="site-shell">
     <header class="site-header">
-      <div class="site-logo">
-        <div class="site-logo-mark"></div>
+      <!-- ここが .logo-area（タイトルクリックでトップに戻る） -->
+      <a href="index.html" class="logo-area">
+        <div class="logo-mark"></div>
         <div>
-          <div class="site-logo-text-main">SenYouAI Studio</div>
-          <div class="site-logo-text-sub">Aigan Ouki &amp; SenYou Miyabi</div>
+          <div class="logo-text-main">SenYouAI Studio</div>
+          <div class="logo-text-sub">Aigan Ouki &amp; SenYou Miyabi</div>
         </div>
-      </div>
-      <nav class="site-nav" id="site-nav"></nav>
+      </a>
+      <nav id="site-nav" class="site-nav"></nav>
     </header>
 
-    <main id="app" class="site-main"></main>
+    <main id="app" class="site-main">
+      <section class="section">
+        <p class="card-meta">Loading...</p>
+      </section>
+    </main>
 
     <footer class="site-footer">
-      <div>
-        &copy; <span id="year"></span> SenYouAI / 愛玩王姫 & 千夕 雅プロジェクト
-      </div>
-      <div>Built as JSON-driven static site draft.</div>
+      <div>© <span id="year"></span> SenYouAI / 愛玩王姫 &amp; 千夕 雅 プロジェクト</div>
+      <div>JSON駆動の静的サイト草案</div>
     </footer>
   </div>
 

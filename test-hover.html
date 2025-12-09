@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hover Test</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      padding: 2rem;
+      background: #0f1119;
+    }
+    .test-info {
+      color: white;
+      margin-bottom: 2rem;
+      font-family: sans-serif;
+    }
+    .test-card {
+      max-width: 300px;
+      margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-info">
+    <h1>カードホバーテスト</h1>
+    <p>各カードにカーソルを乗せてください。拡大されるはずです。</p>
+    <p>拡大されない場合は、ブラウザで F12 → Elements → カードを選択 → Styles で .card:hover を確認してください。</p>
+  </div>
+
+  <!-- 基本カード -->
+  <div class="test-card">
+    <article class="card card--media">
+      <div class="card-cover card-cover--top" style="background-image: url('images/music/HappinessValentine.png'); background-size: cover; background-position: center;"></div>
+      <div class="card-body">
+        <div class="card-title">基本カード（枠なし）</div>
+        <div class="card-meta">scale(1.05)で拡大されるはず</div>
+      </div>
+    </article>
+  </div>
+
+  <!-- 愛玩王姫カード -->
+  <div class="test-card">
+    <article class="card card--media card--artist-ouki">
+      <div class="card-cover card-cover--top" style="background-image: url('images/music/HappinessValentine.png'); background-size: cover; background-position: center;"></div>
+      <div class="card-body">
+        <div class="card-title">愛玩王姫カード（ピンク枠）</div>
+        <div class="card-meta">scale(1.05)で拡大 + ピンクグロー</div>
+      </div>
+    </article>
+  </div>
+
+  <!-- 千夕雅カード -->
+  <div class="test-card">
+    <article class="card card--media card--artist-miyabi">
+      <div class="card-cover card-cover--top" style="background-image: url('images/music/KotobaNoMukougawa.png'); background-size: cover; background-position: center;"></div>
+      <div class="card-body">
+        <div class="card-title">千夕雅カード（ブルー枠）</div>
+        <div class="card-meta">scale(1.05)で拡大 + ブルーグロー</div>
+      </div>
+    </article>
+  </div>
+
+  <script>
+    // ホバー時にconsoleに情報を出力
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        const computedStyle = window.getComputedStyle(this);
+        console.log('Card hovered:', {
+          transform: computedStyle.transform,
+          boxShadow: computedStyle.boxShadow,
+          borderColor: computedStyle.borderColor
+        });
+      });
+    });
+  </script>
+</body>
+</html>
