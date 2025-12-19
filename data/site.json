@@ -1,13 +1,28 @@
 {
   "title": "SenYouAI Studio / 愛玩王姫 Official",
-  "tagline": "AIとあなたで育てるバーチャルプロジェクト。歌とラノベとスタンプで、日常にちょっとした“庇護”を。",
+  "tagline": "AIとあなたで育てる、バーチャルプロジェクト。歌とバラバラスタンプで、日常にちょっとした「癒着」を。",
   "theme": "dark",
   "season": "default",
   "nav": [
-    { "id": "home", "label": "Home" },
-    { "id": "music", "label": "Music" },
-    { "id": "novels", "label": "Novel" },
-    { "id": "stamps", "label": "LINE" },
-    { "id": "about", "label": "About" }
+    {
+      "id": "home",
+      "label": "Home"
+    },
+    {
+      "id": "music",
+      "label": "Music"
+    },
+    {
+      "id": "novels",
+      "label": "Novel"
+    },
+    {
+      "id": "stamps",
+      "label": "LINE"
+    },
+    {
+      "id": "about",
+      "label": "About"
+    }
   ]
 }

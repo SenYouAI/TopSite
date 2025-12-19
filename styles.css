@@ -10,14 +10,10 @@
   --accent-soft: rgba(255, 138, 199, 0.15);
   --accent-strong: #ffb3dd;
   --accent-glow: rgba(255, 138, 199, 0.5);
-  
-  /* Artist colors */
   --ouki-primary: #ffb6d5;
   --ouki-glow: rgba(255, 182, 213, 0.4);
   --miyabi-primary: #c4b5fd;
   --miyabi-glow: rgba(196, 181, 253, 0.4);
-  
-  /* Glassmorphism */
   --glass-bg: rgba(18, 20, 31, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
 }
@@ -38,32 +34,7 @@ body[data-theme="light"] {
   --glass-border: rgba(0, 0, 0, 0.1);
 }
 
-body[data-season="valentine"] {
-  --accent: #ff71c0;
-  --accent-soft: rgba(255, 113, 192, 0.22);
-  --accent-strong: #ff3c9c;
-  --accent-glow: rgba(255, 60, 156, 0.5);
-}
-
-body[data-season="xmas"] {
-  --accent: #39d98a;
-  --accent-soft: rgba(57, 217, 138, 0.22);
-  --accent-strong: #00b56a;
-  --accent-glow: rgba(57, 217, 138, 0.5);
-}
-
-body[data-season="newyear"] {
-  --accent: #ffb74d;
-  --accent-soft: rgba(255, 183, 77, 0.24);
-  --accent-strong: #ff9800;
-  --accent-glow: rgba(255, 183, 77, 0.5);
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -83,8 +54,6 @@ body {
   gap: 1rem;
 }
 
-/* ---------- Header / nav ---------- */
-
 .site-header {
   display: flex;
   align-items: center;
@@ -95,9 +64,7 @@ body {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(24px) saturate(180%);
-  box-shadow: 
-    0 4px 16px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .logo-area {
@@ -111,18 +78,14 @@ body {
   transition: all 0.2s ease-out;
 }
 
-.logo-area:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
+.logo-area:hover { background: rgba(255, 255, 255, 0.05); }
 
 .logo-mark {
   width: 36px;
   height: 36px;
   border-radius: 999px;
   background: linear-gradient(135deg, #ffe5ff 0%, #ff8ac7 50%, #8452ff 100%);
-  box-shadow:
-    0 0 16px var(--accent-glow),
-    0 4px 12px rgba(132, 82, 255, 0.5);
+  box-shadow: 0 0 16px var(--accent-glow), 0 4px 12px rgba(132, 82, 255, 0.5);
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
@@ -131,23 +94,10 @@ body {
   50% { box-shadow: 0 0 24px var(--accent-glow), 0 6px 16px rgba(132, 82, 255, 0.7); }
 }
 
-.logo-text-main {
-  font-size: 1rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-}
+.logo-text-main { font-size: 1rem; font-weight: 650; letter-spacing: -0.01em; }
+.logo-text-sub { font-size: 0.72rem; color: var(--text-muted); }
 
-.logo-text-sub {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-.site-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.82rem;
-}
+.site-nav { display: flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; }
 
 .site-nav a {
   text-decoration: none;
@@ -175,9 +125,7 @@ body {
   transform: translateY(-1px);
 }
 
-.site-nav a:hover::before {
-  opacity: 1;
-}
+.site-nav a:hover::before { opacity: 1; }
 
 .site-nav a.active {
   color: #0f0a12;
@@ -187,18 +135,11 @@ body {
   font-weight: 600;
 }
 
-.site-nav a.active::before {
-  opacity: 0;
-}
+.site-nav a.active::before { opacity: 0; }
 
-/* ---------- Main layout ---------- */
+.site-main { flex: 1 0 auto; }
 
-.site-main {
-  flex: 1 0 auto;
-}
-
-/* ---------- Hero ---------- */
-
+/* Hero */
 .hero {
   background: var(--glass-bg);
   backdrop-filter: blur(20px) saturate(180%);
@@ -210,32 +151,25 @@ body {
   gap: 1.5rem;
   position: relative;
   overflow: hidden;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .hero::before {
   content: "";
   position: absolute;
   inset: -40%;
-  background:
-    radial-gradient(circle at 10% 20%, var(--accent-glow), transparent 50%),
-    radial-gradient(circle at 90% 80%, rgba(132, 82, 255, 0.15), transparent 50%);
+  background: radial-gradient(circle at 10% 20%, var(--accent-glow), transparent 50%),
+              radial-gradient(circle at 90% 80%, rgba(132, 82, 255, 0.15), transparent 50%);
   animation: float-background 20s ease-in-out infinite;
   pointer-events: none;
 }
 
 @keyframes float-background {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-10px, -10px) scale(1.05); }
+  50% { transform: translate(-10px, -10px) scale(1.02); }
 }
 
-.hero-main,
-.hero-side {
-  position: relative;
-  z-index: 1;
-}
+.hero-main, .hero-side { position: relative; z-index: 1; }
 
 .hero-kicker {
   font-size: 0.75rem;
@@ -257,58 +191,9 @@ body {
   background-clip: text;
 }
 
-.hero-tagline {
-  margin: 0;
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
+.hero-tagline { margin: 0; font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
 
-.hero-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.8rem;
-}
-
-.pill {
-  font-size: 0.72rem;
-  padding: 0.25rem 0.65rem;
-  border-radius: 999px;
-  background: var(--bg-soft);
-  border: 1px solid var(--glass-border);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  transition: all 0.2s ease-out;
-}
-
-.pill:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  border-color: var(--accent);
-}
-
-.pill-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--accent-glow);
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
-}
-
-.hero-actions {
-  margin-top: 1rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
+.hero-actions { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.6rem; }
 
 .button {
   font-size: 0.8rem;
@@ -353,17 +238,9 @@ body {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
 }
 
-.button:hover::before {
-  opacity: 1;
-}
-
-.button-primary:hover {
-  box-shadow: 0 12px 32px var(--accent-glow);
-}
-
-.button:active {
-  transform: translateY(0);
-}
+.button:hover::before { opacity: 1; }
+.button-primary:hover { box-shadow: 0 12px 32px var(--accent-glow); }
+.button:active { transform: translateY(0); }
 
 .hero-side-title {
   font-size: 0.78rem;
@@ -374,11 +251,7 @@ body {
   font-weight: 600;
 }
 
-.hero-artist-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
+.hero-artist-grid { display: flex; flex-direction: column; gap: 0.55rem; }
 
 .hero-artist-card {
   display: flex;
@@ -404,7 +277,7 @@ body {
 
 .hero-artist-card:hover .hero-artist-avatar {
   box-shadow: 0 0 24px var(--ouki-glow);
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 .hero-artist-card:hover .hero-artist-avatar--alt {
@@ -430,28 +303,12 @@ body {
   box-shadow: 0 0 16px var(--miyabi-glow);
 }
 
-.hero-artist-name {
-  font-size: 0.88rem;
-  font-weight: 650;
-}
+.hero-artist-name { font-size: 0.88rem; font-weight: 650; }
+.hero-artist-role { font-size: 0.74rem; color: var(--text-muted); margin-top: 0.1rem; }
+.hero-artist-meta { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.1rem; }
 
-.hero-artist-role {
-  font-size: 0.74rem;
-  color: var(--text-muted);
-  margin-top: 0.1rem;
-}
-
-.hero-artist-meta {
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  margin-top: 0.1rem;
-}
-
-/* ---------- Sections & cards ---------- */
-
-.section {
-  margin-top: 0.9rem;
-}
+/* Sections & cards */
+.section { margin-top: 0.9rem; }
 
 .section-header {
   display: flex;
@@ -485,42 +342,26 @@ body {
   margin: 0;
   letter-spacing: -0.01em;
   color: rgba(255, 255, 255, 0.95);
-  text-shadow: 
-    -1px -1px 0 rgba(132, 82, 255, 0.5),
-     1px -1px 0 rgba(132, 82, 255, 0.5),
-    -1px  1px 0 rgba(132, 82, 255, 0.5),
-     1px  1px 0 rgba(132, 82, 255, 0.5),
-     0 0 10px rgba(132, 82, 255, 0.3);
+  text-shadow: -1px -1px 0 rgba(132, 82, 255, 0.5),
+               1px -1px 0 rgba(132, 82, 255, 0.5),
+               -1px 1px 0 rgba(132, 82, 255, 0.5),
+               1px 1px 0 rgba(132, 82, 255, 0.5),
+               0 0 10px rgba(132, 82, 255, 0.3);
 }
 
-.section-subtitle {
-  font-size: 0.76rem;
-  color: var(--text-muted);
-}
+.section-subtitle { font-size: 0.76rem; color: var(--text-muted); }
 
-.card-grid {
-  display: grid;
-  gap: 0.8rem;
-}
+.card-grid { display: grid; gap: 0.8rem; }
 
-/* PC は 2列固定、スマホは 1列 */
 @media (min-width: 720px) {
-  .card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 719.98px) {
-  .card-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  .card-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* 「1列でどーんと見せたい」ページだけ card-grid--single をつける */
-.card-grid--single {
-  grid-template-columns: minmax(0, 1fr);
-}
-
+/* ===== CARD HOVER FIX ===== */
 .card {
   background: var(--glass-bg);
   backdrop-filter: blur(16px) saturate(160%);
@@ -531,22 +372,20 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .card:hover {
-  transform: translateY(-6px) scale(1.05);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(20, 22, 35, 0.85);
+  transform: translateY(-8px) scale(1.02) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
   z-index: 10;
 }
 
-.card--media {
-  padding: 0;
-}
+.card--media { padding: 0; overflow: visible; }
 
 .card-cover {
   width: 64px;
@@ -563,7 +402,7 @@ body {
   height: 0;
   padding-top: 100%;
   border-radius: 0.9rem 0.9rem 0 0;
-  position: relative; /* ★ これを追加：帯を画像内に閉じ込める */
+  position: relative;
 }
 
 .card-body {
@@ -573,26 +412,11 @@ body {
   gap: 0.3rem;
 }
 
-.card-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
+.card-title { font-size: 0.9rem; font-weight: 600; }
+.card-meta { font-size: 0.74rem; color: var(--text-muted); }
+.card-meta--bio { white-space: pre-line; }
 
-.card-meta {
-  font-size: 0.74rem;
-  color: var(--text-muted);
-}
-
-.card-meta--bio {
-  white-space: pre-line;
-}
-
-.chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  margin-top: 0.1rem;
-}
+.chip-row { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.1rem; }
 
 .chip {
   font-size: 0.68rem;
@@ -603,17 +427,11 @@ body {
   background: rgba(10, 12, 22, 0.5);
   backdrop-filter: blur(4px);
   font-weight: 500;
-  /* タグはクリックできない（静的表示） */
   pointer-events: none;
   user-select: none;
 }
 
-.link-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.2rem;
-}
+.link-row { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.2rem; }
 
 .ghost-link {
   font-size: 0.74rem;
@@ -638,12 +456,9 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Artist color accents */
-
+/* Artist color accents - ENHANCED HOVER */
 .card--artist-ouki,
-.card--artist-miyabi {
-  border-width: 2px;
-}
+.card--artist-miyabi { border-width: 2px; }
 
 .card--artist-ouki {
   border-color: var(--ouki-primary);
@@ -651,8 +466,8 @@ body {
 }
 
 .card.card--artist-ouki:hover {
-  border-color: var(--ouki-primary);
-  box-shadow: 0 0 24px var(--ouki-glow), 0 16px 40px rgba(0, 0, 0, 0.3);
+  border-color: var(--ouki-primary) !important;
+  box-shadow: 0 0 30px var(--ouki-glow), 0 20px 50px rgba(0, 0, 0, 0.4) !important;
 }
 
 .card--artist-miyabi {
@@ -661,12 +476,11 @@ body {
 }
 
 .card.card--artist-miyabi:hover {
-  border-color: var(--miyabi-primary);
-  box-shadow: 0 0 24px var(--miyabi-glow), 0 16px 40px rgba(0, 0, 0, 0.3);
+  border-color: var(--miyabi-primary) !important;
+  box-shadow: 0 0 30px var(--miyabi-glow), 0 20px 50px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* Coming soon stripe 画像部分だけに表示 */
-
+/* Coming soon stripe */
 .card--coming .card-cover--top::before {
   content: "COMING SOON";
   position: absolute;
@@ -674,13 +488,9 @@ body {
   right: -20%;
   top: 35%;
   bottom: 35%;
-  background: repeating-linear-gradient(
-    -45deg,
-    rgba(255, 235, 59, 0.8) 0,
-    rgba(255, 235, 59, 0.8) 10px,
-    rgba(0, 0, 0, 0.8) 10px,
-    rgba(0, 0, 0, 0.8) 20px
-  );
+  background: repeating-linear-gradient(-45deg,
+    rgba(255, 235, 59, 0.8) 0, rgba(255, 235, 59, 0.8) 10px,
+    rgba(0, 0, 0, 0.8) 10px, rgba(0, 0, 0, 0.8) 20px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -688,17 +498,11 @@ body {
   font-size: 3.0rem;
   font-weight: 700;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
-  mix-blend-mode: normal;
   pointer-events: none;
 }
 
-/* 歌詞トグル */
-
-.card-lyrics-toggle-row {
-  margin-top: 0.5rem;
-  display: flex;
-  justify-content: center;
-}
+/* Lyrics toggle */
+.card-lyrics-toggle-row { margin-top: 0.5rem; display: flex; justify-content: center; }
 
 .button-lyrics-toggle {
   font-size: 0.78rem;
@@ -721,7 +525,6 @@ body {
   display: none;
   margin-top: 0.6rem;
   padding: 0.8rem;
-  padding-top: 0.8rem;
   border-top: 1px solid var(--glass-border);
   border-radius: 0.8rem;
   background: rgba(10, 12, 22, 0.4);
@@ -739,18 +542,11 @@ body {
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ---------- Page headers ---------- */
-
+/* Page headers */
 .page-header {
   margin-bottom: 1rem;
   padding: 0.9rem 1rem;
@@ -767,25 +563,9 @@ body {
   margin-bottom: 0.1rem;
 }
 
-.page-header-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0.1rem 0 0.3rem;
-}
-
-.page-header-filter {
-  font-size: 0.92rem;
-  font-weight: 500;
-  color: var(--accent-strong);
-}
-
-.page-header-subtitle {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-/* プレイリスト行 */
+.page-header-title { font-size: 1.1rem; font-weight: 600; margin: 0.1rem 0 0.3rem; }
+.page-header-filter { font-size: 0.92rem; font-weight: 500; color: var(--accent-strong); }
+.page-header-subtitle { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
 
 .page-header-playlists {
   margin-top: 0.55rem;
@@ -795,11 +575,7 @@ body {
   align-items: center;
 }
 
-.page-header-playlists-label {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  margin-right: 0.1rem;
-}
+.page-header-playlists-label { font-size: 0.72rem; color: var(--text-muted); margin-right: 0.1rem; }
 
 .playlist-link {
   border-radius: 999px;
@@ -811,35 +587,15 @@ body {
   text-decoration: none;
 }
 
-.playlist-link:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--accent-strong);
-}
+.playlist-link:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--accent-strong); }
+.playlist-link--spotify { border-color: #1db954; }
+.playlist-link--apple { border-color: #fa233b; }
+.playlist-link--amazon { border-color: #ff9900; }
+.playlist-link--ytmusic { border-color: #ff0000; }
 
-.playlist-link--spotify {
-  border-color: #1db954;
-}
+.empty-message { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem; }
 
-.playlist-link--apple {
-  border-color: #fa233b;
-}
-
-.playlist-link--amazon {
-  border-color: #ff9900;
-}
-
-.playlist-link--ytmusic {
-  border-color: #ff0000;
-}
-
-.empty-message {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin-top: 0.2rem;
-}
-
-/* ---------- Footer ---------- */
-
+/* Footer */
 .site-footer {
   margin-top: 1rem;
   padding-top: 0.6rem;
@@ -851,46 +607,24 @@ body {
   gap: 0.5rem;
 }
 
-/* ---------- Reveal animation ---------- */
-
+/* Reveal animation */
 .reveal {
   opacity: 0;
   transform: translateY(12px);
-  transition:
-    opacity 0.4s ease-out,
-    transform 0.4s ease-out;
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
 }
 
-.reveal.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
+.reveal.is-visible { opacity: 1; transform: translateY(0); }
 
-/* ---------- Responsive ---------- */
-
+/* Responsive */
 @media (max-width: 720px) {
-  .site-shell {
-    padding: 0.7rem 0.7rem 1.2rem;
-  }
-
-  .site-header {
-    flex-direction: column;
-    align-items: flex-start;
-    border-radius: 0.9rem;
-  }
-
-  .hero {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .site-footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  .site-shell { padding: 0.7rem 0.7rem 1.2rem; }
+  .site-header { flex-direction: column; align-items: flex-start; border-radius: 0.9rem; }
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .site-footer { flex-direction: column; align-items: flex-start; }
 }
 
-/* ============ Spotify埋め込みプレーヤー（コンパクト版） ============ */
-
+/* Spotify player */
 .card-spotify {
   margin-top: 0.6rem;
   border-radius: 0.8rem;
@@ -909,21 +643,17 @@ body {
   letter-spacing: 0.02em;
 }
 
-.card-spotify-label::before {
-  content: "🎵";
-  font-size: 0.9rem;
-}
+.card-spotify-label::before { content: "🎵"; font-size: 0.9rem; }
 
 .card-spotify iframe {
   width: 100%;
-  height: 152px; /* Spotifyコンパクトプレーヤーの標準サイズ */
+  height: 152px;
   border: none;
   border-radius: 0.8rem;
   background: #121212;
 }
 
-/* ============ アーティストリンク ============ */
-
+/* Artist link */
 .artist-link {
   color: var(--text-main);
   text-decoration: none;
@@ -932,16 +662,10 @@ body {
   display: inline-block;
 }
 
-.artist-link:hover {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
+.artist-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
-/* ============ Newsセクション ============ */
-
-.section-news {
-  margin-bottom: 2rem;
-}
+/* News section */
+.section-news { margin-bottom: 2rem; }
 
 .section-news .section-title {
   font-size: 1.8rem;
@@ -950,11 +674,7 @@ body {
   text-shadow: 0 0 20px rgba(132, 82, 255, 0.5);
 }
 
-.news-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
+.news-container { display: flex; flex-direction: column; gap: 0.8rem; }
 
 .news-card {
   display: flex;
@@ -974,63 +694,22 @@ body {
   box-shadow: 0 4px 12px rgba(132, 82, 255, 0.3);
 }
 
-.news-date {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 140px;
-}
-
-.news-icon {
-  font-size: 1.2rem;
-}
-
-.news-date-text {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.news-content {
-  flex: 1;
-}
-
-.news-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 0.3rem;
-}
-
-.news-description {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
+.news-date { flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; min-width: 140px; }
+.news-icon { font-size: 1.2rem; }
+.news-date-text { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+.news-content { flex: 1; }
+.news-title { font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.3rem; }
+.news-description { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
 
 @media (max-width: 720px) {
-  .news-card {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .news-date {
-    min-width: auto;
-  }
+  .news-card { flex-direction: column; gap: 0.5rem; }
+  .news-date { min-width: auto; }
 }
 
-/* ============ NEWSセクション特別装飾 ============ */
-
-.section-news .section-header::before {
-  content: "✿";
-  font-size: 2rem;
-  color: #ff69b4;
-  opacity: 0.7;
-}
+.section-news .section-header::before { content: "✿"; font-size: 2rem; color: #ff69b4; opacity: 0.7; }
 
 .section-news .section-header::after {
-  content: "❀";
+  content: "✦";
   position: absolute;
   left: 1.5rem;
   top: -5px;
@@ -1038,4 +717,53 @@ body {
   color: var(--accent);
   opacity: 0.5;
   animation: twinkle 4s ease-in-out infinite 0.5s;
+}
+
+/* ============ タイプバッジ（Latest統合用） ============ */
+
+.card-type-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.02em;
+}
+
+.card-type-badge--music {
+  background: linear-gradient(135deg, rgba(255, 138, 199, 0.2), rgba(132, 82, 255, 0.2));
+  color: var(--accent-strong);
+  border: 1px solid rgba(255, 138, 199, 0.3);
+}
+
+.card-type-badge--novel {
+  background: linear-gradient(135deg, rgba(100, 200, 255, 0.2), rgba(50, 150, 255, 0.2));
+  color: #7dd3fc;
+  border: 1px solid rgba(100, 200, 255, 0.3);
+}
+
+.card-type-badge--stamp {
+  background: linear-gradient(135deg, rgba(250, 200, 100, 0.2), rgba(255, 150, 50, 0.2));
+  color: #fcd34d;
+  border: 1px solid rgba(250, 200, 100, 0.3);
+}
+
+/* Novel/Stampカードの枠色 */
+.card--novel {
+  border-color: rgba(100, 200, 255, 0.4);
+}
+
+.card--novel:hover {
+  border-color: rgba(100, 200, 255, 0.8) !important;
+  box-shadow: 0 0 20px rgba(100, 200, 255, 0.3), 0 16px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+.card--stamp {
+  border-color: rgba(250, 200, 100, 0.4);
+}
+
+.card--stamp:hover {
+  border-color: rgba(250, 200, 100, 0.8) !important;
+  box-shadow: 0 0 20px rgba(250, 200, 100, 0.3), 0 16px 40px rgba(0, 0, 0, 0.3) !important;
 }

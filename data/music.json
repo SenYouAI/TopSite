@@ -4,73 +4,63 @@
       "title": "Singles",
       "items": [
         {
-          "id": "song_happiness_valentine",
+          "id": "happiness_valentine",
           "title": "Happiness Valentine",
           "artistId": "ouki",
           "releaseDate": "2024-02-14",
           "status": "released",
-          "cover": "images/music/happiness-valentine.png",
-          "tags": ["Pop", "Valentine", "恋愛"],
+          "cover": "images/About/happinessvalentine.png",
+          "lyricsPreview": "君の笑顔が 心を満たす バレンタインの日に",
+          "lyrics": "君の笑顔が 心を満たす\nバレンタインの日に\nチョコよりも甘い\nこの気持ちを贈りたい",
+          "note": "",
+          "tags": [
+            "Pop",
+            "Valentine",
+            "恋愛"
+          ],
           "links": {
-            "YouTube": "",
-            "Spotify": "https://open.spotify.com/track/6yHtBzrhFticFaI2DBzkY6",
-            "Apple Music": ""
+            "Spotify": ""
           },
-          "spotifyEmbed": "https://open.spotify.com/embed/track/6yHtBzrhFticFaI2DBzkY6?utm_source=generator",
-          "lyricsPreview": "チョコレートみたいに とけてしまいそうな…",
-          "lyrics": "鏡の前でくるりんぱ\n今日の私は特別だな\nリボンの色も迷っちゃう\n君の笑顔が浮かんじゃう\n\n秘密のノートに書き留めた\nきらめく想い どうしようかな\n心の中でリハーサル\nでも声が震えちゃうよ\n\nパチパチ弾けるこの気持ち\n抑えきれないハートの音\n夢みたいなシナリオ描いて\n君の前で勇気出すんだ\n\nもしも伝わらなかったら\n涙なんて流さないよ\nでも少しだけ不安になる\nだって君が特別だから\n\nキッチンの中でひとりごと\n手を動かすたび高鳴るの\n可愛いパッケージ選んだら\nきっと笑顔で受け取ってね\n\nキラキラ光るこの想い\n届けたいな 胸の鼓動\n魔法みたいな瞬間信じて\n君の心に触れたいんだ",
-          "note": "バレンタインをテーマにした王姫の定番ポップ曲。"
+          "spotifyEmbed": ""
         },
         {
-          "id": "song_kotoba_no_mukougawa",
+          "id": "kotoba_mukougawa",
           "title": "言葉の向こう側",
           "artistId": "ouki",
           "releaseDate": "2024-11-15",
           "status": "released",
-          "cover": "",
-          "tags": ["Ballad", "切ない"],
-          "links": {
-            "YouTube": "",
-            "Spotify": "https://open.spotify.com/track/4vbtXAnsrryqeqtDtKTODk",
-            "Apple Music": ""
-          },
-          "spotifyEmbed": "https://open.spotify.com/embed/track/4vbtXAnsrryqeqtDtKTODk?utm_source=generator",
-          "lyricsPreview": "",
+          "cover": "images/music/KotobaNoMukougawa.png",
+          "lyricsPreview": "言葉にならない この想いを どうやって伝えよう",
           "lyrics": "",
-          "note": ""
+          "note": "",
+          "tags": [
+            "Ballad",
+            "切ない"
+          ],
+          "links": {
+            "Spotify": ""
+          },
+          "spotifyEmbed": ""
         },
         {
-          "id": "song_jugoya_monologue",
+          "id": "juugoya_monologue",
           "title": "十五夜モノローグ",
-          "artistId": "ouki",
+          "artistId": "chiya_masa",
           "releaseDate": "2024-09-17",
           "status": "released",
-          "cover": "",
-          "tags": ["Ballad", "月"],
-          "links": {
-            "YouTube": "",
-            "Spotify": "https://open.spotify.com/track/4S2bNyZctKpnELluRoN67m",
-            "Apple Music": ""
-          },
-          "spotifyEmbed": "https://open.spotify.com/embed/track/4S2bNyZctKpnELluRoN67m?utm_source=generator",
-          "lyricsPreview": "",
+          "cover": "images/music/JuugoyaMonologue.png",
+          "lyricsPreview": "満月の夜に 一人佇んで",
           "lyrics": "",
-          "note": ""
-        },
-        {
-          "id": "song_dummy_future",
-          "title": "（ダミー）Future Song",
-          "artistId": "chiya_masa",
-          "releaseDate": "2025-XX-XX",
-          "status": "coming",
-          "tags": ["Future", "Ballad"],
+          "note": "",
+          "tags": [
+            "Japanese",
+            "月",
+            "秋"
+          ],
           "links": {
-            "YouTube": "",
-            "Spotify": "",
-            "Apple Music": ""
+            "Spotify": ""
           },
-          "lyricsPreview": "まだ見ぬ曲がここに入ります…",
-          "note": "千夕 雅 名義の曲ができたらここに追加予定。"
+          "spotifyEmbed": ""
         }
       ]
     }
