@@ -1,845 +1,594 @@
-let globalData = null;
-let revealObserver = null;
-let currentArtistFilter = null;
-
-async function loadJson(path) {
-  const res = await fetch(path);
-  if (!res.ok) throw new Error("Failed to load " + path);
-  return res.json();
-}
-
-async function loadAllData() {
-  const [site, artists, music, novels, stamps, news] = await Promise.all([
-    loadJson("data/site.json"),
-    loadJson("data/artists.json"),
-    loadJson("data/music.json"),
-    loadJson("data/novels.json"),
-    loadJson("data/stamps.json"),
-    loadJson("data/news.json").catch(() => ({ items: [] })),
-  ]);
-  return { site, artists, music, novels, stamps, news };
-}
-
-document.addEventListener("DOMContentLoaded", async () => {
-  const app = document.getElementById("app");
-  const yearSpan = document.getElementById("year");
-  if (yearSpan) yearSpan.textContent = new Date().getFullYear().toString();
-
-  try {
-    globalData = await loadAllData();
-    applySiteMeta(globalData.site);
-    initRevealObserver();
-
-    const filterFromPage = window.__ARTIST_FILTER__ || null;
-    const initial = parseInitialState();
-    currentArtistFilter = filterFromPage || initial.artistId;
-    
-    renderPage(initial.pageId);
-  } catch (err) {
-    console.error(err);
-    if (app) app.innerHTML = "<p>データの読み込みに失敗しました。</p>";
-  }
+document.addEventListener('DOMContentLoaded', () => {
+  init();
 });
 
-function parseInitialState() {
-  const params = new URLSearchParams(window.location.search);
-  const hash = window.location.hash.replace("#", "");
-  const allPages = ["home", "music", "novels", "stamps", "about"];
-  let pageId = params.get("page") || hash;
-  if (!allPages.includes(pageId)) pageId = "home";
-  return { pageId, artistId: params.get("artist") || null };
-}
+const state = {
+  music: [],
+  news: [],
+  artists: [],
+  novels: [],
+  stamps: [],
+  currentArtistFilter: null // null (all), 'ouki', 'miyabi'
+};
 
-function applySiteMeta(site) {
-  document.title = site.title || document.title;
-  document.body.dataset.theme = site.theme || "dark";
-  document.body.dataset.season = site.season || "default";
-}
+const ARTIST_MAPPING = {
+  '/ouki.html': 'ouki',
+  '/miyabi.html': 'miyabi'
+};
 
-function renderNav(navItems) {
-  const navRoot = document.getElementById("site-nav");
-  if (!navRoot) return;
-  navRoot.innerHTML = "";
+async function init() {
+  try {
+    // 1. Determine current page context
+    const path = window.location.pathname.split('/').pop();
+    state.currentArtistFilter = ARTIST_MAPPING['/' + path] || null;
 
-  navItems.forEach((item, index) => {
-    if (item.id === "novels") {
-      if (currentArtistFilter === "chiya_masa") return;
-      const hasNovels = globalData.novels?.sections?.some(s => s.items?.length > 0);
-      if (!hasNovels) return;
-    }
-    if (item.id === "stamps") {
-      if (currentArtistFilter === "chiya_masa") return;
-      const hasStamps = globalData.stamps?.sections?.some(s => s.items?.length > 0);
-      if (!hasStamps) return;
+    // Adjust UI based on page
+    if (state.currentArtistFilter) {
+      document.body.classList.add('artist-page');
+      // Hide other artist from filter bar if present (optional, or auto-select)
+      updateFilterBarForArtistPage(state.currentArtistFilter);
     }
 
-    const a = document.createElement("a");
-    a.href = "#" + item.id;
-    a.textContent = item.label;
-    if (index === 0) a.classList.add("active");
-    a.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      renderPage(item.id);
-    });
-    navRoot.appendChild(a);
-  });
+    // 2. Fetch data
+    await loadData();
+
+    // 3. Render content
+    renderHero();
+    renderNews();
+    renderMusic();
+    renderNovels();
+    renderStamps();
+    renderArtists();
+
+    // 4. Setup event listeners
+    setupFilters();
+    setupMobileMenu();
+    setupModal();
+
+    // 5. Remove loader
+    setTimeout(() => {
+      document.body.classList.add('body-loaded');
+    }, 500);
+
+  } catch (error) {
+    console.error('Initialization failed:', error);
+    document.body.classList.add('body-loaded');
+  }
 }
 
-function setActiveNav(pageId) {
-  const navRoot = document.getElementById("site-nav");
-  if (!navRoot) return;
-  navRoot.querySelectorAll("a").forEach((a) => {
-    const target = a.getAttribute("href")?.replace("#", "");
-    a.classList.toggle("active", target === pageId);
-  });
+function updateFilterBarForArtistPage(artistId) {
+  // If we are on ouki.html, we effectively only show Ouki content.
+  // We can hide the filter bar or force select.
+  // Let's hide the filter bar to simplify, as the page itself is the filter.
+  // Or we can keep it but hide the other buttons.
+  const filterBar = document.getElementById('music-filter-bar');
+  if (filterBar) {
+    filterBar.style.display = 'none'; // Simplify: no music filter on specific artist page
+  }
+
+  // Also hide top nav links that might not be relevant? 
+  // User asked to "filter only that item" in menu too.
+  // Menu items: Top, News, Music, Novels, Stamps, Artists.
+  // We should keep them but filter the content they link to.
 }
 
-function updateFooter() {
-  const footer = document.querySelector(".site-footer > div");
-  if (!footer) return;
-  const year = new Date().getFullYear();
-  
-  if (currentArtistFilter === "ouki") {
-    footer.innerHTML = "© " + year + " SenYouAI / 愛玩王姫プロジェクト";
-  } else if (currentArtistFilter === "chiya_masa") {
-    footer.innerHTML = "© " + year + " SenYouAI / 千夕 雅プロジェクト";
+async function loadData() {
+  const [musicRes, newsRes, artistsRes, novelsRes, stampsRes] = await Promise.all([
+    fetch('data/music.json'),
+    fetch('data/news.json'),
+    fetch('data/artists.json'),
+    fetch('data/novels.json'),
+    fetch('data/stamps.json')
+  ]);
+
+  const musicData = await musicRes.json();
+  const newsData = await newsRes.json();
+  const artistsData = await artistsRes.json();
+  const novelsData = await novelsRes.json();
+  const stampsData = await stampsRes.json();
+
+  // Process Music
+  // music.json might be { sections: [...] } -> flatten
+  state.music = musicData.sections ? musicData.sections.flatMap(s => s.items) : (musicData.items || []);
+  state.music.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+
+  // Process News
+  state.news = newsData.items || [];
+
+  // Artists
+  state.artists = artistsData.items || [];
+
+  // Novels
+  state.novels = novelsData.sections ? novelsData.sections.flatMap(s => s.items) : (novelsData.items || []);
+
+  // Stamps
+  state.stamps = stampsData.sections ? stampsData.sections.flatMap(s => s.items) : (stampsData.items || []);
+}
+
+function shouldShow(item) {
+  if (!state.currentArtistFilter) return true;
+
+  // Logic to determine if an item belongs to the current artist.
+
+  // 1. Explicit artistId property (Music)
+  if (item.artistId && item.artistId === state.currentArtistFilter) return true;
+
+  // 2. inferred from ID prefix (common pattern: ouki_xxx)
+  if (item.id && item.id.startsWith(state.currentArtistFilter)) return true;
+
+  // 3. Tags containing artist ID or name?
+  if (item.tags && (item.tags.includes(state.currentArtistFilter) || item.tags.includes('ouki') && state.currentArtistFilter === 'ouki')) return true;
+
+  return false;
+}
+
+function renderHero() {
+  // 1. Gather all content into one array with type info
+  const allContent = [
+    ...state.music.filter(shouldShow).map(i => ({ ...i, type: 'music', date: i.releaseDate })),
+    ...state.novels.filter(shouldShow).map(i => ({ ...i, type: 'novel', date: i.date })),
+    ...state.stamps.filter(shouldShow).map(i => ({ ...i, type: 'stamp', date: i.date }))
+  ];
+
+  if (allContent.length === 0) return;
+
+  // 2. Sort by date desc
+  allContent.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // 3. Find latest date group
+  const latestDate = allContent[0].date;
+  const latestItems = allContent.filter(i => i.date === latestDate);
+
+  const heroSection = document.getElementById('hero');
+  const container = heroSection.querySelector('.hero-content');
+
+  // Clear existing content logic
+  // If we have single item vs multiple, layout differs.
+
+  if (latestItems.length === 1) {
+    // SINGLE ITEM LAYOUT (Keep close to original but dynamic)
+    const item = latestItems[0];
+    renderSingleHero(item, container);
   } else {
-    footer.innerHTML = "© " + year + " SenYouAI / 愛玩王姫 & 千夕 雅 プロジェクト";
+    // MULTI ITEM LAYOUT
+    renderMultiHero(latestItems, container);
   }
 }
 
-function initRevealObserver() {
-  if (typeof IntersectionObserver === "undefined") return;
-  revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("is-visible");
-        revealObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1, rootMargin: "0px 0px 100px 0px" });
-}
+function renderSingleHero(item, container) {
+  // Clear container to rebuild safe
+  container.innerHTML = '';
 
-function registerRevealTargets(root) {
-  if (!revealObserver || !root) return;
-  root.querySelectorAll(".reveal").forEach((el) => {
-    if (!el.classList.contains("is-visible")) {
-      const rect = el.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0) {
-        el.classList.add("is-visible");
-      } else {
-        revealObserver.observe(el);
-      }
-    }
-  });
-}
+  const tag = document.createElement('div');
+  tag.className = 'hero-tag';
+  tag.textContent = 'LATEST RELEASE';
+  container.appendChild(tag);
 
-function renderPage(pageId) {
-  const app = document.getElementById("app");
-  if (!app || !globalData) return;
+  const img = document.createElement('img');
+  img.id = 'hero-cover';
+  img.className = 'hero-cover';
+  img.src = item.cover || 'images/default_cover.png';
+  img.alt = item.title;
+  container.appendChild(img);
 
-  const { site, artists, music, novels, stamps, news } = globalData;
-  app.innerHTML = "";
+  const h1 = document.createElement('h1');
+  h1.id = 'hero-title';
+  h1.className = 'hero-title';
+  h1.textContent = item.title;
+  container.appendChild(h1);
 
-  let root;
-  if (pageId === "home") root = renderHome(site, artists, music, novels, stamps, news);
-  else if (pageId === "music") root = renderMusic(artists, music, currentArtistFilter);
-  else if (pageId === "novels") root = renderNovels(novels);
-  else if (pageId === "stamps") root = renderStamps(stamps);
-  else if (pageId === "about") root = renderAbout(artists, currentArtistFilter);
-  else {
-    root = document.createElement("div");
-    root.innerHTML = "<p>ページが見つかりません。</p>";
+  const p = document.createElement('p');
+  p.id = 'hero-desc';
+  p.className = 'hero-desc';
+  // Desc logic per type
+  if (item.type === 'music') p.textContent = item.lyricsPreview || item.subtitle || 'New Single';
+  else if (item.type === 'novel') p.textContent = item.description || 'New Story';
+  else if (item.type === 'stamp') p.textContent = 'New LINE Stamps';
+  container.appendChild(p);
+
+  const actions = document.createElement('div');
+  actions.className = 'hero-actions';
+
+  // Primary Button
+  if (item.type === 'music') {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.innerHTML = '<i class="fas fa-play"></i> 試聴する';
+    btn.onclick = () => openMusicModal(item);
+    actions.appendChild(btn);
+  } else if (item.link || (item.links && (item.links.Store || item.links.Read))) {
+    const url = item.link || item.links.Store || item.links.Read;
+    const btn = document.createElement('a');
+    btn.href = url;
+    btn.target = '_blank';
+    btn.className = 'btn btn-primary';
+    btn.innerHTML = item.type === 'novel' ? '<i class="fas fa-book-open"></i> 読む' : '<i class="fas fa-store"></i> 見る';
+    actions.appendChild(btn);
+  } else if (item.detailUrl) { // stamp json uses detailUrl in original
+    const btn = document.createElement('a');
+    btn.href = item.detailUrl;
+    btn.target = '_blank';
+    btn.className = 'btn btn-primary';
+    btn.innerHTML = '<i class="fas fa-store"></i> 見る';
+    actions.appendChild(btn);
   }
 
-  app.appendChild(root);
-  renderNav(site.nav);
-  setActiveNav(pageId);
-  updateFooter();
-  registerRevealTargets(app);
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-// ===== 統合Latestセクション用：全コンテンツを日付順にマージ =====
-function getAllLatestItems(music, novels, stamps, filterArtistId) {
-  const items = [];
-  
-  // Music items
-  const allTracks = (music.sections || []).flatMap((s) => s.items || []);
-  let tracks = filterArtistId ? allTracks.filter(t => t.artistId === filterArtistId) : allTracks;
-  tracks.forEach(track => {
-    items.push({
-      type: "music",
-      date: track.releaseDate || "1900-01-01",
-      data: track
-    });
-  });
-  
-  // Novel items (フィルタなしの場合のみ)
-  if (!filterArtistId) {
-    const allNovels = (novels.sections || []).flatMap(s => s.items || []);
-    allNovels.forEach(novel => {
-      items.push({
-        type: "novel",
-        date: novel.date || novel.releaseDate || "1900-01-01",
-        data: novel
-      });
-    });
-  }
-  
-  // Stamp items (フィルタなしの場合のみ)
-  if (!filterArtistId) {
-    const allStamps = (stamps.sections || []).flatMap(s => s.items || []);
-    allStamps.forEach(stamp => {
-      items.push({
-        type: "stamp",
-        date: stamp.date || stamp.releaseDate || "1900-01-01",
-        data: stamp
-      });
-    });
-  }
-  
-  // 日付で降順ソート（新しいものが先）
-  items.sort((a, b) => {
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
-    return dateB - dateA;
-  });
-  
-  return items;
-}
-
-function renderHome(site, artists, music, novels, stamps, news) {
-  const root = document.createElement("div");
-  const filterArtistId = currentArtistFilter;
-  let filteredArtists = artists.items || [];
-  
-  if (filterArtistId) {
-    filteredArtists = filteredArtists.filter(a => a.id === filterArtistId);
-  }
-
-  const hero = document.createElement("section");
-  hero.className = "hero reveal";
-  
-  const currentArtist = filterArtistId ? getArtistById(artists, filterArtistId) : null;
-  const heroTitle = currentArtist 
-    ? currentArtist.name + " Official" 
-    : "愛玩王姫 & 千夕 雅 Official";
-  const heroTagline = currentArtist ? currentArtist.bio : site.tagline;
-  
-  hero.innerHTML = `
-    <div class="hero-main">
-      <div class="hero-kicker">SenYouAI Studio</div>
-      <h1 class="hero-title">${escapeHtml(heroTitle)}</h1>
-      <p class="hero-tagline">${escapeHtml(heroTagline)}</p>
-      <div class="hero-actions">
-        <button class="button button-primary" data-jump="music">最新曲を聴く</button>
-        ${filterArtistId ? "" : "<button class=\"button button-ghost\" data-jump=\"novels\">物語を読む</button>"}
-      </div>
-    </div>
-    <div class="hero-side">
-      <div class="hero-side-title">ARTISTS</div>
-      <div class="hero-artist-grid">
-        ${filteredArtists.map((a) => `
-          <button class="hero-artist-card hero-artist-card--${escapeHtml(a.id)}" data-artist-id="${escapeHtml(a.id)}">
-            <div class="hero-artist-avatar ${a.id === "chiya_masa" ? "hero-artist-avatar--alt" : ""}" style="background-image: url('${escapeHtml(a.cover || "")}');"></div>
-            <div class="hero-artist-text">
-              <div class="hero-artist-name">${escapeHtml(a.name)}</div>
-              <div class="hero-artist-role">${escapeHtml(a.role || "")}</div>
-              <div class="hero-artist-meta">SenYouAI Project</div>
-            </div>
-          </button>
-        `).join("")}
-      </div>
-    </div>
-  `;
-  root.appendChild(hero);
-
-  hero.querySelectorAll("[data-jump]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = btn.getAttribute("data-jump");
-      if (target === "music") currentArtistFilter = null;
-      renderPage(target);
-    });
-  });
-
-  hero.querySelectorAll(".hero-artist-card").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      currentArtistFilter = btn.dataset.artistId || null;
-      renderPage("home");
-    });
-  });
-
-  // News section (フィルタなしの場合のみ)
-  if (!filterArtistId && news?.items?.length > 0) {
-    const newsSection = document.createElement("section");
-    newsSection.className = "section section-news reveal";
-    newsSection.innerHTML = `
-      <div class="section-header">
-        <h2 class="section-title">NEWS</h2>
-        <div class="section-subtitle">お知らせ・最新情報</div>
-      </div>
-    `;
-    
-    const newsContainer = document.createElement("div");
-    newsContainer.className = "news-container";
-    
-    news.items.slice(0, 5).forEach((item) => {
-      const newsCard = document.createElement("div");
-      newsCard.className = "news-card";
-      newsCard.innerHTML = `
-        <div class="news-date">
-          <span class="news-icon">${escapeHtml(item.icon || "📢")}</span>
-          <span class="news-date-text">${escapeHtml(item.date)}</span>
-        </div>
-        <div class="news-content">
-          <div class="news-title">${escapeHtml(item.title)}</div>
-          ${item.description ? `<div class="news-description">${escapeHtml(item.description)}</div>` : ""}
-        </div>
-      `;
-      
-      if (item.link) {
-        newsCard.style.cursor = "pointer";
-        newsCard.addEventListener("click", () => {
-          if (item.link.startsWith("#")) renderPage(item.link.substring(1));
-          else window.open(item.link, "_blank");
-        });
-      }
-      newsContainer.appendChild(newsCard);
-    });
-    
-    newsSection.appendChild(newsContainer);
-    root.appendChild(newsSection);
-  }
-
-  // ===== 統合 Latest セクション =====
-  const latestSection = document.createElement("section");
-  latestSection.className = "section reveal";
-  latestSection.innerHTML = `
-    <div class="section-header">
-      <h2 class="section-title">Latest</h2>
-      <div class="section-subtitle">最新コンテンツ</div>
-    </div>
-  `;
-  const latestGrid = document.createElement("div");
-  latestGrid.className = "card-grid";
-
-  // 全コンテンツを日付順に取得
-  const allLatest = getAllLatestItems(music, novels, stamps, filterArtistId);
-  
-  // 上位6件を表示
-  allLatest.slice(0, 6).forEach((item) => {
-    if (item.type === "music") {
-      latestGrid.appendChild(createMusicCard(item.data, artists));
-    } else if (item.type === "novel") {
-      latestGrid.appendChild(createNovelCard(item.data));
-    } else if (item.type === "stamp") {
-      latestGrid.appendChild(createStampCard(item.data));
-    }
-  });
-
-  latestSection.appendChild(latestGrid);
-  root.appendChild(latestSection);
-
-  return root;
-}
-
-function renderMusic(artists, music, artistFilter) {
-  const root = document.createElement("div");
-  const header = document.createElement("header");
-  header.className = "page-header reveal";
-
-  let subtitle = "配信リンクと歌詞をまとめる楽曲一覧ページです。";
-  let artistName = "";
-  if (artistFilter) {
-    const artist = getArtistById(artists, artistFilter);
-    if (artist) {
-      artistName = artist.name;
-      subtitle = artistName + " 名義の楽曲一覧です。";
-    }
-  }
-
-  header.innerHTML = `
-    <div class="page-header-kicker">PAGE</div>
-    <h1 class="page-header-title">Music ${artistName ? `<span class="page-header-filter">/ ${escapeHtml(artistName)}</span>` : ""}</h1>
-    <p class="page-header-subtitle">${escapeHtml(subtitle)}</p>
-  `;
-  appendPlaylistRow(header, artists, artistFilter);
-  root.appendChild(header);
-
-  const sec = document.createElement("section");
-  sec.className = "section reveal";
-  sec.innerHTML = `
-    <div class="section-header">
-      <h2 class="section-title">All Tracks</h2>
-      <div class="section-subtitle">${artistName ? escapeHtml(artistName) + " のシングル" : "シングル一覧"}</div>
-    </div>
-  `;
-
-  const grid = document.createElement("div");
-  grid.className = "card-grid";
-
-  const allTracks = (music.sections || []).flatMap((s) => s.items || []);
-  const tracks = artistFilter ? allTracks.filter((t) => t.artistId === artistFilter) : allTracks;
-
-  tracks.forEach((track) => grid.appendChild(createMusicCard(track, artists)));
-
-  if (!tracks.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty-message";
-    empty.textContent = "まだ楽曲が登録されていません。";
-    sec.appendChild(empty);
-  }
-
-  sec.appendChild(grid);
-  root.appendChild(sec);
-  return root;
-}
-
-function appendPlaylistRow(headerEl, artists, artistFilter) {
-  if (!headerEl || !artists?.items) return;
-  let targetArtist = artistFilter 
-    ? getArtistById(artists, artistFilter)
-    : artists.items.find(a => a.playlists && Object.keys(a.playlists).length > 0);
-
-  if (!targetArtist?.playlists) return;
-
-  const row = document.createElement("div");
-  row.className = "page-header-playlists";
-  
-  const label = document.createElement("span");
-  label.className = "page-header-playlists-label";
-  label.textContent = targetArtist.name + " Playlist";
-  row.appendChild(label);
-
-  const addLink = (key, text, cls) => {
-    const url = targetArtist.playlists[key];
-    if (!url) return;
-    const a = document.createElement("a");
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.className = "playlist-link " + cls;
-    a.textContent = text;
-    row.appendChild(a);
+  // Secondary Button
+  const secBtn = document.createElement('button'); // using button to navigate smoothly or anchor
+  secBtn.className = 'btn btn-outline';
+  secBtn.textContent = 'View All';
+  secBtn.onclick = () => {
+    // scroll to relevant section
+    const targetId = item.type === 'music' ? 'music' : (item.type === 'novel' ? 'novels' : 'stamps');
+    document.getElementById(targetId).scrollIntoView({ behavior: 'smooth' });
   };
+  actions.appendChild(secBtn);
 
-  addLink("spotify", "Spotify", "playlist-link--spotify");
-  addLink("appleMusic", "Apple Music", "playlist-link--apple");
-  addLink("amazonMusic", "Amazon Music", "playlist-link--amazon");
-  addLink("youtubeMusic", "YouTube Music", "playlist-link--ytmusic");
-  headerEl.appendChild(row);
+  container.appendChild(actions);
 }
 
-function renderNovels(novels) {
-  const root = document.createElement("div");
-  const header = document.createElement("header");
-  header.className = "page-header reveal";
-  header.innerHTML = `
-    <div class="page-header-kicker">PAGE</div>
-    <h1 class="page-header-title">Novel</h1>
-    <p class="page-header-subtitle">愛玩王姫の物語やラノベ企画の概要をまとめるページです。</p>
-  `;
-  root.appendChild(header);
+function renderMultiHero(items, container) {
+  container.innerHTML = '';
 
-  const sec = document.createElement("section");
-  sec.className = "section reveal";
-  sec.innerHTML = `
-    <div class="section-header">
-      <h2 class="section-title">Projects</h2>
-      <div class="section-subtitle">進行中のラノベ企画</div>
-    </div>
-  `;
+  const tag = document.createElement('div');
+  tag.className = 'hero-tag';
+  tag.textContent = `LATEST RELEASE - ${items[0].date}`;
+  container.appendChild(tag);
 
-  const grid = document.createElement("div");
-  grid.className = "card-grid";
-  (novels.sections || []).flatMap(s => s.items || []).forEach(novel => grid.appendChild(createNovelCard(novel)));
-  sec.appendChild(grid);
-  root.appendChild(sec);
-  return root;
-}
+  const title = document.createElement('h1');
+  title.className = 'hero-title';
+  title.style.fontSize = '2rem';
+  title.style.marginBottom = '2rem';
+  title.textContent = 'New Arrivals';
+  container.appendChild(title);
 
-function renderStamps(stamps) {
-  const root = document.createElement("div");
-  const header = document.createElement("header");
-  header.className = "page-header reveal";
-  header.innerHTML = `
-    <div class="page-header-kicker">PAGE</div>
-    <h1 class="page-header-title">LINEスタンプ</h1>
-    <p class="page-header-subtitle">愛玩王姫のLINEスタンプへのリンクをまとめるページです。</p>
-  `;
-  root.appendChild(header);
+  const grid = document.createElement('div');
+  grid.className = 'hero-multi-grid'; // will style this
+  grid.style.display = 'flex';
+  grid.style.gap = '2rem';
+  grid.style.justifyContent = 'center';
+  grid.style.flexWrap = 'wrap';
 
-  const sec = document.createElement("section");
-  sec.className = "section reveal";
-  sec.innerHTML = `
-    <div class="section-header">
-      <h2 class="section-title">Stamp Packs</h2>
-      <div class="section-subtitle">公開中のスタンプ</div>
-    </div>
-  `;
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'hero-mini-card';
+    card.style.background = '#fff';
+    card.style.padding = '1rem';
+    card.style.borderRadius = '12px';
+    card.style.boxShadow = '0 5px 20px rgba(0,0,0,0.1)';
+    card.style.width = '200px';
+    card.style.textAlign = 'center';
 
-  const grid = document.createElement("div");
-  grid.className = "card-grid";
-  (stamps.sections || []).flatMap(s => s.items || []).forEach(stamp => grid.appendChild(createStampCard(stamp)));
-  sec.appendChild(grid);
-  root.appendChild(sec);
-  return root;
-}
+    const imgC = document.createElement('img');
+    imgC.src = item.cover || 'images/default_cover.png';
+    imgC.style.width = '100%';
+    imgC.style.borderRadius = '8px';
+    imgC.style.marginBottom = '0.5rem';
 
-function renderAbout(artists, filterArtistId) {
-  const root = document.createElement("div");
-  const header = document.createElement("header");
-  header.className = "page-header reveal";
-  header.innerHTML = `
-    <div class="page-header-kicker">PAGE</div>
-    <h1 class="page-header-title">About</h1>
-    <p class="page-header-subtitle">SenYouAI Studio と、その中の人たちの紹介ページです。</p>
-  `;
-  root.appendChild(header);
+    const tit = document.createElement('div');
+    tit.style.fontWeight = 'bold';
+    tit.style.fontSize = '0.9rem';
+    tit.style.marginBottom = '0.5rem';
+    tit.textContent = item.title;
 
-  const sec = document.createElement("section");
-  sec.className = "section reveal";
-  sec.innerHTML = `
-    <div class="section-header">
-      <h2 class="section-title">Artists</h2>
-      <div class="section-subtitle">所属アーティスト</div>
-    </div>
-  `;
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.fontSize = '0.7rem';
+    btn.style.padding = '0.4rem 1rem';
+    btn.textContent = 'Check';
 
-  const grid = document.createElement("div");
-  grid.className = "card-grid";
-
-  const filteredArtists = filterArtistId
-    ? (artists.items || []).filter(a => a.id === filterArtistId)
-    : (artists.items || []);
-
-  filteredArtists.forEach((a) => {
-    const card = document.createElement("article");
-    card.className = "card card--media reveal";
-
-    const cover = document.createElement("div");
-    cover.className = "card-cover card-cover--top";
-    if (a.cover) {
-      cover.style.backgroundImage = "url('" + a.cover + "')";
-      cover.style.backgroundSize = "cover";
-      cover.style.backgroundPosition = "center";
-    }
-    card.appendChild(cover);
-
-    const body = document.createElement("div");
-    body.className = "card-body";
-
-    const titleEl = document.createElement("div");
-    titleEl.className = "card-title";
-    titleEl.textContent = a.name;
-    body.appendChild(titleEl);
-
-    if (a.role) {
-      const roleEl = document.createElement("div");
-      roleEl.className = "card-meta";
-      roleEl.textContent = a.role;
-      body.appendChild(roleEl);
+    if (item.type === 'music') {
+      btn.onclick = () => openMusicModal(item);
+    } else {
+      // simple link logic
+      const url = item.link || item.detailUrl || (item.links && (item.links.Store || item.links.Read));
+      if (url) {
+        btn.onclick = () => window.open(url, '_blank');
+      }
     }
 
-    if (a.bio) {
-      const bioEl = document.createElement("p");
-      bioEl.className = "card-meta card-meta--bio";
-      bioEl.textContent = a.bio;
-      body.appendChild(bioEl);
-    }
-
-    card.appendChild(body);
+    card.appendChild(imgC);
+    card.appendChild(tit);
+    card.appendChild(btn);
     grid.appendChild(card);
   });
 
-  sec.appendChild(grid);
-  root.appendChild(sec);
-  return root;
+  container.appendChild(grid);
 }
 
-function getArtistById(artists, id) {
-  return (artists.items || []).find((a) => a.id === id) || null;
+function renderNews() {
+  const list = document.getElementById('news-list');
+  list.innerHTML = '';
+
+  // Assuming News might not be strictly tagged by artist, or we show all news?
+  // Let's filter if possible, otherwise show all.
+  // The User didn't specify news filtering rules, but "Show only items for that artist".
+  // If news has no artist info, we might show all or none.
+  // Let's assume global news for now unless we add tags to news.
+
+  state.news.slice(0, 3).forEach(item => {
+    // Determine if it's a link
+    const isLink = !!item.link;
+    const elementType = isLink ? 'a' : 'div';
+
+    const wrapper = document.createElement(elementType);
+    wrapper.className = `news-item ${isLink ? 'has-link' : ''}`;
+    if (isLink) {
+      wrapper.href = item.link;
+      wrapper.target = '_blank';
+    }
+
+    wrapper.innerHTML = `
+      <div class="news-icon">${item.icon || 'INFO'}</div>
+      <div class="news-date">${item.date}</div>
+      <div class="news-content">
+        <div class="news-title">${item.title}</div>
+        <p style="font-size:0.9rem; color:#888;">${item.description}</p>
+      </div>
+    `;
+    list.appendChild(wrapper);
+  });
 }
 
-function createMusicCard(track, artists) {
-  const artist = getArtistById(artists, track.artistId);
-  const status = track.status || "released";
+function renderMusic() {
+  const grid = document.getElementById('music-grid');
+  grid.innerHTML = '';
 
-  const card = document.createElement("article");
-  card.className = "card card--media card--music reveal";
-  if (status === "coming") card.classList.add("card--coming");
-  if (artist) card.classList.add(artist.id === "chiya_masa" ? "card--artist-miyabi" : "card--artist-ouki");
+  const displayItems = state.music.filter(shouldShow);
 
-  const cover = document.createElement("div");
-  cover.className = "card-cover card-cover--top";
-  if (track.cover) {
-    cover.style.backgroundImage = "url('" + track.cover + "')";
-    cover.style.backgroundSize = "cover";
-    cover.style.backgroundPosition = "center";
+  if (displayItems.length === 0 && state.currentArtistFilter) {
+    grid.innerHTML = '<p style="text-align:center; color:#aaa;">No music found for this artist.</p>';
+    return;
   }
-  card.appendChild(cover);
 
-  const body = document.createElement("div");
-  body.className = "card-body";
+  displayItems.forEach(track => {
+    const card = document.createElement('div');
+    card.className = `music-card ${track.artistId}`;
+    card.dataset.artist = track.artistId;
 
-  // タイプバッジ
-  const typeBadge = document.createElement("div");
-  typeBadge.className = "card-type-badge card-type-badge--music";
-  typeBadge.textContent = "🎵 Music";
-  body.appendChild(typeBadge);
+    let artistClass = '';
+    if (track.artistId === 'ouki') artistClass = 'artist-ouki';
+    if (track.artistId === 'miyabi') artistClass = 'artist-miyabi';
 
-  const titleEl = document.createElement("div");
-  titleEl.className = "card-title";
-  titleEl.textContent = track.title;
-  body.appendChild(titleEl);
+    card.innerHTML = `
+      <div class="card-image">
+        <img src="${track.cover || 'images/default_cover.png'}" alt="${track.title}" loading="lazy">
+      </div>
+      <div class="card-info">
+        <div class="card-title">${track.title}</div>
+        <div class="card-artist">
+          <span class="${artistClass}">${getArtistName(track.artistId)}</span>
+        </div>
+      </div>
+    `;
 
-  const metaEl = document.createElement("div");
-  metaEl.className = "card-meta";
-  let dateLabel = track.releaseDate || "";
-  if (status === "coming" && dateLabel) dateLabel += "（予定）";
-  
-  if (artist?.artistPageUrl) {
-    const artistLink = document.createElement("a");
-    artistLink.href = artist.artistPageUrl;
-    artistLink.className = "artist-link";
-    artistLink.textContent = artist.name;
-    metaEl.appendChild(artistLink);
-    if (dateLabel) metaEl.appendChild(document.createTextNode(" ／ " + dateLabel));
+    card.addEventListener('click', () => openMusicModal(track));
+    grid.appendChild(card);
+  });
+}
+
+function renderArtists() {
+  const grid = document.getElementById('artists-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const displayItems = state.artists.filter(shouldShow);
+
+  displayItems.forEach(artist => {
+    const links = artist.links || {};
+    let socialsHtml = '<div class="artist-socials" style="margin-top: 1rem; display: flex; justify-content: center; gap: 1rem;">';
+
+    if (links.Youtube) socialsHtml += `<a href="${links.Youtube}" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>`;
+    if (links.X) socialsHtml += `<a href="${links.X}" target="_blank" title="X (Twitter)"><i class="fab fa-x-twitter"></i></a>`;
+    if (links.Instagram) socialsHtml += `<a href="${links.Instagram}" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>`;
+    if (links.Facebook) socialsHtml += `<a href="${links.Facebook}" target="_blank" title="Facebook"><i class="fab fa-facebook"></i></a>`;
+
+    socialsHtml += '</div>';
+
+    let playlistHtml = '';
+    if (artist.playlistUrl) {
+      playlistHtml = `<div style="margin-top: 1rem;">
+        <a href="${artist.playlistUrl}" target="_blank" class="btn btn-outline" style="font-size: 0.85rem;">
+          <i class="fas fa-list"></i> Artist Playlist
+        </a>
+      </div>`;
+    }
+
+    // "Profile Page" link logic:
+    // If we are on index.html, link to artist page.
+    // If we are on artist page, maybe no link needed or link to "About" section?
+    // User requested "Link from index.html to artist page".
+    let profileLink = '';
+    if (!state.currentArtistFilter && artist.artistPageUrl) {
+      profileLink = `<a href="${artist.artistPageUrl}" class="btn btn-outline" style="margin-top: 1rem;">Profile Page</a>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = `artist-card ${artist.id}`;
+
+    // Determine color class or style
+    const isOuki = artist.id === 'ouki';
+    const isMiyabi = artist.id === 'miyabi';
+
+    // We already have CSS for .artist-card.ouki etc.
+
+    card.innerHTML = `
+      <div class="artist-image-wrapper">
+        <img src="${artist.cover}" class="artist-thumb" alt="${artist.name}">
+      </div>
+      <div class="artist-name-group">
+        <span class="artist-en">${artist.name.split('（')[0]}</span> <!-- English/Main Name approach -->
+        <span class="artist-jp">${artist.name}</span>
+      </div>
+      <p class="artist-bio">
+        ${artist.bio}
+      </p>
+      ${socialsHtml}
+      ${playlistHtml}
+      ${profileLink}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderNovels() {
+  const grid = document.getElementById('novels-grid');
+  grid.innerHTML = '';
+
+  const displayItems = state.novels.filter(shouldShow);
+
+  displayItems.forEach(novel => {
+    const card = document.createElement('div');
+    card.className = 'novel-card';
+    card.innerHTML = `
+      <div class="novel-date">${novel.date || ''}</div>
+      <div class="novel-title">${novel.title}</div>
+      <p class="novel-desc">${novel.description}</p>
+      <div class="novel-tag">Read More</div>
+    `;
+    // Link logic? JSON has 'link'?
+    if (novel.link || novel.links) {
+      card.style.cursor = 'pointer';
+      // card.onclick ...
+    }
+    grid.appendChild(card);
+  });
+}
+
+function renderStamps() {
+  const grid = document.getElementById('stamps-grid');
+  grid.innerHTML = '';
+
+  const displayItems = state.stamps.filter(shouldShow);
+
+  displayItems.forEach(stamp => {
+    const card = document.createElement('div');
+    card.className = 'stamp-card';
+    card.innerHTML = `
+      <div class="stamp-image">
+        <img src="${stamp.cover}" alt="${stamp.title}" loading="lazy">
+      </div>
+      <div class="stamp-title">${stamp.title}</div>
+      <a href="${stamp.detailUrl || '#'}" target="_blank" class="stamp-link">View Store</a>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function getArtistName(id) {
+  const artist = state.artists.find(a => a.id === id);
+  return artist ? artist.name.split('（')[0] : id;
+}
+
+function setupFilters() {
+  // Only relevant on index.html where we have filters
+  if (state.currentArtistFilter) return;
+
+  const buttons = document.querySelectorAll('.filter-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const filter = btn.dataset.filter;
+      const cards = document.querySelectorAll('.music-card');
+
+      cards.forEach(card => {
+        if (filter === 'all' || card.dataset.artist === filter) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+}
+
+// Modal Logic (Same as before but refined style)
+const modal = document.getElementById('music-modal');
+const modalBody = document.getElementById('modal-body');
+const modalClose = document.querySelector('.modal-close');
+
+function setupModal() {
+  modalClose.addEventListener('click', closeMusicModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
+      closeMusicModal();
+    }
+  });
+}
+
+function openMusicModal(track) {
+  const artist = state.artists.find(a => a.id === track.artistId);
+  const artistName = artist ? artist.name : track.artistId;
+  const color = track.artistId === 'ouki' ? 'var(--accent-ouki)' : 'var(--accent-miyabi)';
+
+  let embedHtml = '';
+  if (track.spotifyEmbed) {
+    embedHtml = track.spotifyEmbed;
+  } else if (track.links && track.links.Spotify) { // JSON structure might be nested or flat based on CSV
+    // Check both possibilities
+    const url = track.links.Spotify || track.links_Spotify;
+    if (url) {
+      embedHtml = `<a href="${url}" target="_blank" class="btn btn-primary" style="margin-top:1.5rem; width:100%; justify-content:center;">
+         <i class="fab fa-spotify"></i> Listen on Spotify
+       </a>`;
+    }
+  } else if (track.links_Spotify) { // Direct flat check
+    embedHtml = `<a href="${track.links_Spotify}" target="_blank" class="btn btn-primary" style="margin-top:1.5rem; width:100%; justify-content:center;">
+         <i class="fab fa-spotify"></i> Listen on Spotify
+       </a>`;
   } else {
-    metaEl.textContent = [artist?.name || "", dateLabel].filter(Boolean).join(" ／ ");
-  }
-  body.appendChild(metaEl);
-
-  // Spotify player
-  if (track.spotifyEmbed?.trim()) {
-    const spotifyContainer = document.createElement("div");
-    spotifyContainer.className = "card-spotify";
-    
-    const spotifyLabel = document.createElement("div");
-    spotifyLabel.className = "card-spotify-label";
-    spotifyLabel.textContent = "Spotifyで試聴";
-    spotifyContainer.appendChild(spotifyLabel);
-    
-    const spotifyIframe = document.createElement("iframe");
-    spotifyIframe.src = track.spotifyEmbed;
-    spotifyIframe.loading = "lazy";
-    spotifyIframe.allow = "encrypted-media";
-    spotifyContainer.appendChild(spotifyIframe);
-    body.appendChild(spotifyContainer);
+    embedHtml = `<div class="modal-player-placeholder">Preview not available</div>`;
   }
 
-  if (track.tags?.length) {
-    const chipRow = document.createElement("div");
-    chipRow.className = "chip-row";
-    track.tags.forEach((t) => {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.textContent = t;
-      chipRow.appendChild(chip);
-    });
-    body.appendChild(chipRow);
-  }
+  const lyricsHtml = track.lyrics ?
+    `<div style="margin-top:2rem; text-align:left; border-top:1px solid #eee; padding-top:1.5rem;">
+      <h4 style="font-size:0.9rem; color:#ccc; margin-bottom:1rem;">LYRICS</h4>
+      <p style="white-space: pre-line; font-size: 0.95rem; line-height: 2; color: var(--text-main); font-family: var(--font-heading);">${track.lyrics}</p>
+     </div>` : '';
 
-  if (track.note || track.lyricsPreview) {
-    const desc = document.createElement("p");
-    desc.className = "card-meta";
-    desc.textContent = track.note || track.lyricsPreview;
-    body.appendChild(desc);
-  }
+  modalBody.innerHTML = `
+    <div style="display: flex; gap: 2rem; align-items: flex-start; text-align: left; margin-bottom: 2rem;">
+      <img src="${track.cover || 'images/default_cover.png'}" style="width: 140px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+      <div>
+        <h2 style="font-family: var(--font-heading); font-size: 1.8rem; margin-bottom: 0.5rem; line-height: 1.2;">${track.title}</h2>
+        <p style="color: ${color}; font-weight: 700;">${artistName}</p>
+        <p style="color: var(--text-sub); font-size: 0.85rem; margin-top: 0.5rem;">${track.releaseDate}</p>
+      </div>
+    </div>
+    ${embedHtml}
+    ${lyricsHtml}
+  `;
 
-  // Lyrics toggle
-  if (track.lyrics?.trim()) {
-    const toggleRow = document.createElement("div");
-    toggleRow.className = "card-lyrics-toggle-row";
-
-    const toggleBtn = document.createElement("button");
-    toggleBtn.type = "button";
-    toggleBtn.className = "button button-ghost button-lyrics-toggle";
-    toggleBtn.textContent = "歌詞を表示";
-
-    const lyricsEl = document.createElement("div");
-    lyricsEl.className = "card-lyrics";
-    lyricsEl.innerHTML = track.lyrics.split(/\r?\n/).map(line => escapeHtml(line)).join("<br>");
-
-    toggleBtn.addEventListener("click", () => {
-      const open = card.classList.toggle("card--lyrics-open");
-      toggleBtn.textContent = open ? "歌詞を閉じる" : "歌詞を表示";
-    });
-
-    toggleRow.appendChild(toggleBtn);
-    body.appendChild(toggleRow);
-    body.appendChild(lyricsEl);
-  }
-
-  const linkRow = document.createElement("div");
-  linkRow.className = "link-row";
-  if (track.links) {
-    Object.entries(track.links).filter(([, url]) => !!url).forEach(([label, url]) => {
-      const a = document.createElement("a");
-      a.href = url;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.className = "ghost-link";
-      a.textContent = label;
-      linkRow.appendChild(a);
-    });
-  }
-  body.appendChild(linkRow);
-  card.appendChild(body);
-  return card;
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
-function createNovelCard(novel) {
-  const card = document.createElement("article");
-  card.className = "card card--media card--novel reveal";
+function closeMusicModal() {
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
 
-  const cover = document.createElement("div");
-  cover.className = "card-cover card-cover--top";
-  if (novel.cover) {
-    cover.style.backgroundImage = "url('" + novel.cover + "')";
-    cover.style.backgroundSize = "cover";
-    cover.style.backgroundPosition = "center";
-  }
-  card.appendChild(cover);
+function setupMobileMenu() {
+  // Simple toggle
+  const toggle = document.querySelector('.mobile-menu-toggle');
+  const nav = document.querySelector('.site-nav');
 
-  const body = document.createElement("div");
-  body.className = "card-body";
-
-  // タイプバッジ
-  const typeBadge = document.createElement("div");
-  typeBadge.className = "card-type-badge card-type-badge--novel";
-  typeBadge.textContent = "📖 Novel";
-  body.appendChild(typeBadge);
-
-  const titleEl = document.createElement("div");
-  titleEl.className = "card-title";
-  titleEl.textContent = novel.title;
-  body.appendChild(titleEl);
-
-  if (novel.subtitle) {
-    const subEl = document.createElement("div");
-    subEl.className = "card-meta";
-    subEl.textContent = novel.subtitle;
-    body.appendChild(subEl);
-  }
-
-  if (novel.date) {
-    const dateEl = document.createElement("div");
-    dateEl.className = "card-meta";
-    dateEl.textContent = novel.date;
-    body.appendChild(dateEl);
-  }
-
-  if (novel.description) {
-    const desc = document.createElement("p");
-    desc.className = "card-meta";
-    desc.textContent = novel.description;
-    body.appendChild(desc);
-  }
-
-  if (novel.links) {
-    const linkRow = document.createElement("div");
-    linkRow.className = "link-row";
-    if (novel.links.narou) {
-      const a = document.createElement("a");
-      a.href = novel.links.narou;
-      a.target = "_blank";
-      a.className = "ghost-link";
-      a.textContent = "小説サイト";
-      linkRow.appendChild(a);
+  toggle.addEventListener('click', () => {
+    if (nav.style.display === 'flex') {
+      nav.style.display = 'none';
+    } else {
+      nav.style.display = 'flex';
+      nav.style.flexDirection = 'column';
+      nav.style.position = 'absolute';
+      nav.style.top = 'var(--nav-height)';
+      nav.style.left = '0';
+      nav.style.right = '0';
+      nav.style.background = 'rgba(255,255,255,0.98)';
+      nav.style.padding = '2rem';
+      nav.style.boxShadow = '0 10px 30px rgba(0,0,0,0.05)';
+      nav.style.alignItems = 'center';
     }
-    if (novel.links.kindle) {
-      const a = document.createElement("a");
-      a.href = novel.links.kindle;
-      a.target = "_blank";
-      a.className = "ghost-link";
-      a.textContent = "Kindle";
-      linkRow.appendChild(a);
-    }
-    body.appendChild(linkRow);
-  }
-  card.appendChild(body);
-  return card;
-}
-
-function createStampCard(stamp) {
-  const card = document.createElement("article");
-  card.className = "card card--media card--stamp reveal";
-
-  const cover = document.createElement("div");
-  cover.className = "card-cover card-cover--top";
-  if (stamp.cover) {
-    cover.style.backgroundImage = "url('" + stamp.cover + "')";
-    cover.style.backgroundSize = "cover";
-    cover.style.backgroundPosition = "center";
-  }
-  card.appendChild(cover);
-
-  const body = document.createElement("div");
-  body.className = "card-body";
-
-  // タイプバッジ
-  const typeBadge = document.createElement("div");
-  typeBadge.className = "card-type-badge card-type-badge--stamp";
-  typeBadge.textContent = "🎨 LINE Stamp";
-  body.appendChild(typeBadge);
-
-  const titleEl = document.createElement("div");
-  titleEl.className = "card-title";
-  titleEl.textContent = stamp.title;
-  body.appendChild(titleEl);
-
-  if (stamp.date) {
-    const dateEl = document.createElement("div");
-    dateEl.className = "card-meta";
-    dateEl.textContent = stamp.date;
-    body.appendChild(dateEl);
-  }
-
-  if (stamp.description) {
-    const desc = document.createElement("p");
-    desc.className = "card-meta";
-    desc.textContent = stamp.description;
-    body.appendChild(desc);
-  }
-
-  if (stamp.tags?.length) {
-    const chipRow = document.createElement("div");
-    chipRow.className = "chip-row";
-    stamp.tags.forEach((t) => {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.textContent = t;
-      chipRow.appendChild(chip);
-    });
-    body.appendChild(chipRow);
-  }
-
-  const linkRow = document.createElement("div");
-  linkRow.className = "link-row";
-  if (stamp.listUrl) {
-    const a = document.createElement("a");
-    a.href = stamp.listUrl;
-    a.target = "_blank";
-    a.className = "ghost-link";
-    a.textContent = "作者スタンプ一覧";
-    linkRow.appendChild(a);
-  }
-  if (stamp.detailUrl) {
-    const a = document.createElement("a");
-    a.href = stamp.detailUrl;
-    a.target = "_blank";
-    a.className = "ghost-link";
-    a.textContent = "このスタンプを見る";
-    linkRow.appendChild(a);
-  }
-  body.appendChild(linkRow);
-  card.appendChild(body);
-  return card;
-}
-
-function escapeHtml(str) {
-  if (str == null) return "";
-  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  });
 }

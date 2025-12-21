@@ -1,0 +1,4 @@
+id,title,artistId,releaseDate,status,cover,lyricsPreview,lyrics,tags,links_Spotify,links_AppleMusic,links_AmazonMusic,links_YoutubeMusic,links_MV,spotifyEmbed,_note
+happiness_valentine,Happiness Valentine,ouki,2024-02-14,released,images/About/happinessvalentine.png,君の笑顔が 心を満たす バレンタインの日に,"君の笑顔が 心を満たす\nバレンタインの日に\nチョコよりも甘い\nこの気持ちを贈りたい",Pop|Valentine|恋愛,,,,,https://youtu.be/example_mv,,
+kotoba_mukougawa,言葉の向こう側,ouki,2024-11-15,released,images/music/KotobaNoMukougawa.png,言葉にならない この想いを どうやって伝えよう,,Ballad|切ない,,,,,,,
+juugoya_monologue,十五夜モノローグ,miyabi,2024-09-17,released,images/music/JuugoyaMonologue.png,満月の夜に 一人佇んで,,Japanese|月|秋,,,,,,,

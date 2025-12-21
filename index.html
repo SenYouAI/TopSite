@@ -1,30 +1,201 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SenYouAI Studio / 愛玩王姫 Official</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Shippori+Mincho:wght@500;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Meta Pixel Code -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    // Replace YOUR_PIXEL_ID with your actual Pixel ID
+    // fbq('init', 'YOUR_PIXEL_ID'); 
+    // fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    // Replace G-XXXXXXXXXX with your actual Measurement ID
+    // gtag('config', 'G-XXXXXXXXXX');
+  </script>
 </head>
-<body>
-  <div class="site-shell">
+
+<body class="loading">
+  <!-- Loading Screen -->
+  <div id="loader">
+    <div class="loader-content">
+      <div class="loader-logo">SenYouAI Studio</div>
+      <div class="loader-bar"></div>
+    </div>
+  </div>
+
+  <div class="site-wrapper">
+    <!-- Header -->
     <header class="site-header">
-      <a href="index.html" class="logo-area">
-        <div class="logo-mark"></div>
-        <div>
-          <div class="logo-text-main">SenYouAI Studio</div>
-          <div class="logo-text-sub">Aigan Ouki &amp; SenYou Miyabi</div>
+      <div class="header-inner">
+        <a href="index.html" class="logo">
+          <span class="logo-symbol">✿</span>
+          <span class="logo-text">SenYouAI Studio</span>
+        </a>
+        <nav class="site-nav">
+          <a href="#hero" class="active">Top</a>
+          <a href="#news">News</a>
+          <a href="#music">Music</a>
+          <a href="#novels">Novels</a>
+          <a href="#stamps">Stamps</a>
+          <a href="#artists">Artists</a>
+        </nav>
+        <div class="mobile-menu-toggle">
+          <i class="fas fa-bars"></i>
         </div>
-      </a>
-      <nav id="site-nav" class="site-nav"></nav>
+      </div>
     </header>
-    <main id="app" class="site-main">
-      <section class="section"><p class="card-meta">Loading...</p></section>
-    </main>
+
+    <!-- Hero Section (Latest Release) -->
+    <section id="hero" class="hero-section">
+      <div class="hero-bg"></div>
+      <div class="hero-content container">
+        <div class="hero-tag">LATEST RELEASE</div>
+        <img id="hero-cover" class="hero-cover" src="images/default_cover.png" alt="Latest Release">
+        <h1 class="hero-title" id="hero-title">Loading...</h1>
+        <p class="hero-desc" id="hero-desc">...</p>
+        <div class="hero-actions">
+          <button id="hero-play-btn" class="btn btn-primary"><i class="fas fa-play"></i> 試聴する</button>
+          <a href="#music" class="btn btn-outline">Discography</a>
+        </div>
+      </div>
+      <div class="scroll-indicator">
+        <span>SCROLL</span>
+        <div class="line"></div>
+      </div>
+    </section>
+
+    <!-- Upcoming Section -->
+    <section id="upcoming" class="section upcoming-section" style="display: none;">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">UPCOMING</h2>
+          <span class="section-subtitle">近日公開・配信予定</span>
+        </div>
+        <div id="upcoming-list" class="upcoming-list">
+          <!-- Upcoming items injected here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- News Section -->
+    <section id="news" class="section news-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">NEWS</h2>
+          <span class="section-subtitle">最新情報</span>
+        </div>
+        <div id="news-list" class="news-list">
+          <!-- News items injected here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Music Section -->
+    <section id="music" class="section music-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">MUSIC</h2>
+          <span class="section-subtitle">楽曲紹介</span>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar" id="music-filter-bar">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="ouki">愛玩王姫</button>
+          <button class="filter-btn" data-filter="chiya_masa">千夕 雅</button>
+        </div>
+
+        <div id="music-grid" class="music-grid">
+          <!-- Music cards injected here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Novels Section -->
+    <section id="novels" class="section novels-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">NOVELS</h2>
+          <span class="section-subtitle">小説・ストーリー</span>
+        </div>
+        <div id="novels-grid" class="novels-grid">
+          <!-- Novel cards injected here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Stamps Section -->
+    <section id="stamps" class="section stamps-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">STAMPS</h2>
+          <span class="section-subtitle">LINEスタンプ</span>
+        </div>
+        <div id="stamps-grid" class="stamps-grid">
+          <!-- Stamp cards injected here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Artists Section -->
+    <section id="artists" class="section artists-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">ARTISTS</h2>
+        </div>
+        <div id="artists-grid" class="artists-grid">
+          <!-- Artist cards injected here -->
+        </div>
+      </div>
+    </section>
+
     <footer class="site-footer">
-      <div>© <span id="year"></span> SenYouAI / 愛玩王姫 &amp; 千夕 雅 プロジェクト</div>
+      <div class="container">
+        <p>&copy; 2024 SenYouAI Studio. All Rights Reserved.</p>
+      </div>
     </footer>
   </div>
+
+  <!-- Music Modal -->
+  <div id="music-modal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <button class="modal-close"><i class="fas fa-times"></i></button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
   <script src="main.js"></script>
 </body>
+
 </html>
